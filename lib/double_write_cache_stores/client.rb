@@ -10,11 +10,11 @@ class DoubleWriteCacheStores::Client
   end
 
   def get(key)
-    @read_and_write_store.get key
+    get_or_read_method_call key
   end
 
   def read(key)
-    @read_and_write_store.read key
+    get_or_read_method_call key
   end
 
   def delete(key)
@@ -23,11 +23,11 @@ class DoubleWriteCacheStores::Client
   end
 
   def set(key, value, options = nil)
-    write_cache_store __method__, key, value, options
+    write_cache_store key, value, options
   end
 
   def write(key, value, options = nil)
-    write_cache_store __method__, key, value, options
+    write_cache_store key, value, options
   end
 
   def touch(key)
@@ -50,9 +50,25 @@ class DoubleWriteCacheStores::Client
 
   private
 
-  def write_cache_store(method, key, value, options = nil)
-    @read_and_write_store.send method, key, value, options
-    @write_only_store.send method, key, value, options if @write_only_store
+  def write_cache_store(key, value, options = nil)
+    set_or_write_method_call @read_and_write_store, key, value, options
+    set_or_write_method_call @write_only_store, key, value, options if @write_only_store
+  end
+
+  def set_or_write_method_call cache_store, key, value, options
+    if cache_store.respond_to? :set
+      cache_store.set key, value, options
+    elsif cache_store.respond_to? :write
+      cache_store.write key, value, options
+    end
+  end
+
+  def get_or_read_method_call key
+    if @read_and_write_store.respond_to? :get
+      @read_and_write_store.get key
+    elsif @read_and_write_store.respond_to? :read
+      @read_and_write_store.read key
+    end
   end
 
   def flush_cache_store(method = :flush)
