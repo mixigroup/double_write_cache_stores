@@ -85,6 +85,8 @@ class DoubleWriteCacheStores::Client
 
     if cache_store.respond_to?(:[]=) && options.nil?
       cache_store[key] = value
+    elsif cache_store.respond_to? :store
+      cache_store.store key, value, options
     elsif cache_store.respond_to? :set
       cache_store.set key, value, options
     elsif cache_store.respond_to? :write
