@@ -76,7 +76,14 @@ class DoubleWriteCacheStores::Client
   end
 
   def set_or_write_method_call cache_store, key, value, options
-    if cache_store.respond_to? :[]=
+    if cache_store.is_a? Padrino::Cache::LegacyStore
+      if options && options[:expires_in]
+        options[:expires] = options[:expires_in].to_i
+        options[:expires_in] = nil
+      end
+    end
+
+    if cache_store.respond_to?(:[]=) && options.nil?
       cache_store[key] = value
     elsif cache_store.respond_to? :set
       cache_store.set key, value, options
