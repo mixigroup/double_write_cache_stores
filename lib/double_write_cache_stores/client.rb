@@ -30,6 +30,10 @@ class DoubleWriteCacheStores::Client
     set key, value
   end
 
+  def store(key, value, options = nil)
+    write_cache_store key, value, options
+  end
+
   def set(key, value, options = nil)
     write_cache_store key, value, options
   end

@@ -188,10 +188,13 @@ describe DoubleWriteCacheStores::Client do
       double_write_cache_store['aaa'] = 'aaa-value'
       double_write_cache_store.set 'bbb', 'bbb-value'
       double_write_cache_store.write 'ccc', 'ccc-value'
+      double_write_cache_store.store 'ddd', 'ddd-value'
+
 
       expect(double_write_cache_store['aaa']).to eq 'aaa-value'
       expect(double_write_cache_store.get 'bbb').to eq 'bbb-value'
       expect(double_write_cache_store.read 'ccc').to eq 'ccc-value'
+      expect(double_write_cache_store['ddd']).to eq 'ddd-value'
 
       expect(double_write_cache_store['zzz']).to eq nil
       expect(double_write_cache_store.get 'zzz').to eq nil
