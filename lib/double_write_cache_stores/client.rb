@@ -48,6 +48,8 @@ class DoubleWriteCacheStores::Client
     end
   end
 
+  alias :clear :flush
+
   private
 
   def write_cache_store(key, value, options = nil)

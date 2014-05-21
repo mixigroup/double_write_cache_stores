@@ -134,4 +134,14 @@ describe DoubleWriteCacheStores::Client do
     end
   end
 
+  describe '#clear' do
+    before do
+      copy_cache_store.write 'will-flush-key', 'will-flush-value', :expires_in => 1.day
+    end
+    it 'alias #flush' do
+      expect(copy_cache_store.clear).to eq true
+      expect(copy_cache_store.read 'will-flush-key').to be_nil
+    end
+  end
+
 end
