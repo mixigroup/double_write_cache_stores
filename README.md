@@ -5,7 +5,7 @@ pre-warning(double write to cach store and other cache store) cache store wrappe
 ## Support
 
 - ActiveSupport::Cache::DalliStore(Dalli)
-- Padrino::Cache::Store::Memcache
+- Padrino::Cache(v0.12.x)
 
 ## Installation
 
