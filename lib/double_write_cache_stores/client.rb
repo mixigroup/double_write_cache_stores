@@ -27,7 +27,7 @@ class DoubleWriteCacheStores::Client
   end
 
   def []=(key, value)
-    set key, value
+    write_cache_store key, value
   end
 
   def set(key, value, options = nil)
