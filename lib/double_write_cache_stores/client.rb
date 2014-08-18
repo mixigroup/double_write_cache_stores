@@ -9,6 +9,10 @@ class DoubleWriteCacheStores::Client
     end
   end
 
+  def [](key)
+    get key
+  end
+
   def get(key)
     get_or_read_method_call key
   end
@@ -20,6 +24,10 @@ class DoubleWriteCacheStores::Client
   def delete(key)
     @read_and_write_store.delete key
     @write_only_store.delete key if @write_only_store
+  end
+
+  def []=(key, value)
+    set key, value
   end
 
   def set(key, value, options = nil)

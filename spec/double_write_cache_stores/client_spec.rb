@@ -29,6 +29,13 @@ describe DoubleWriteCacheStores::Client do
     end
   end
 
+  describe 'set #[]=(key, value) and get #[](key)' do
+    it 'set value and get value' do
+      copy_cache_store['key'] = 'example-value'
+      expect(copy_cache_store['key']).to eq 'example-value'
+    end
+  end
+
   describe '#delete' do
     before do
       copy_cache_store.write 'will-delete-key', 'example-will-delete-value', :expires_in => 1.day
