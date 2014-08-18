@@ -61,15 +61,15 @@ describe DoubleWriteCacheStores::Client do
       support_touch_copy_cache_store.set 'touch-key', 'touch-value', :expires_in => 1.day
     end
     it 'example' do
-      expect(support_touch_copy_cache_store.touch 'touch-key').to be_true
-      expect(support_touch_copy_cache_store.touch 'non-set-key').to be_nil
+      expect(support_touch_copy_cache_store.touch 'touch-key').to be true
+      expect(support_touch_copy_cache_store.touch 'non-set-key').to be nil
     end
     context 'when touch non support backend' do
       before do
         copy_cache_store.write 'unsupport-touch-key', 'touch-value', :expires_in => 1.day
       end
       it 'not doing touch' do
-        expect(copy_cache_store.touch 'unsupport-touch-key').to be_false
+        expect(copy_cache_store.touch 'unsupport-touch-key').to be false
       end
     end
   end
@@ -128,7 +128,7 @@ describe DoubleWriteCacheStores::Client do
       end
       it 'example' do
         expect(support_flash_copy_cache_store.get 'will-flush-key').to eq 'will-flush-value'
-        expect(support_flash_copy_cache_store.flush).to be_true
+        expect(support_flash_copy_cache_store.flush).to be true
         expect(support_flash_copy_cache_store.get 'will-flush-key').to be_nil
       end
     end
