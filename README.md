@@ -2,7 +2,13 @@
 
 pre-warning(double write to cach store and other cache store) cache store wrapper. will switch cache store.
 
-## Support
+## Convertible interface, get/set by cache store
+
+- Padrino::Cache(moneta)
+- ActiveSupport::Cache::DalliStore(Dalli)
+- Padrino::Cache::Store::Memcache
+
+## Support backend cache store
 
 - ActiveSupport::Cache::DalliStore(Dalli)
 - Padrino::Cache::Store::Memcache
