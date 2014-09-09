@@ -67,16 +67,26 @@ describe DoubleWriteCacheStores::Client do
     before do
       support_touch_copy_cache_store.set 'touch-key', 'touch-value', :expires_in => 1.day
     end
-    it 'example' do
-      expect(support_touch_copy_cache_store.touch 'touch-key').to be true
-      expect(support_touch_copy_cache_store.touch 'non-set-key').to be nil
-    end
-    context 'when touch non support backend' do
-      before do
-        copy_cache_store.write 'unsupport-touch-key', 'touch-value', :expires_in => 1.day
+
+    context 'Dalli::Client' do
+      it 'example' do
+        expect(support_touch_copy_cache_store.touch 'touch-key').to be true
+        expect(support_touch_copy_cache_store.touch 'non-set-key').to be nil
       end
-      it 'not doing touch' do
-        expect(copy_cache_store.touch 'unsupport-touch-key').to be false
+    end
+
+    context 'ActiveSupport::Cache::DalliStore' do
+      let :double_write_dalli_store do
+        DoubleWriteCacheStores::Client.new ActiveSupport::Cache::DalliStore.new('localhost:11211', options), ActiveSupport::Cache::DalliStore.new('localhost:21211', options)
+      end
+
+      before do
+        double_write_dalli_store.set 'touch-key', 'touch-valule', :expires_in => 1.day
+      end
+
+      it 'example' do
+        expect(double_write_dalli_store.touch 'touch-key').to be true
+        expect(double_write_dalli_store.touch 'non-set-key').to be nil
       end
     end
   end

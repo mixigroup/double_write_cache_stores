@@ -40,7 +40,7 @@ class DoubleWriteCacheStores::Client
 
   def touch(key)
     result = false
-    read_and_write_backend = @read_and_write_store.instance_variable_get '@backend'
+    read_and_write_backend = @read_and_write_store.instance_variable_get('@backend') || @read_and_write_store.instance_variable_get('@data')
     if read_and_write_backend && read_and_write_backend.respond_to?(:touch)
       result = read_and_write_backend.touch key
       write_only_store_touch key
@@ -92,7 +92,8 @@ class DoubleWriteCacheStores::Client
 
   def write_only_store_touch(key)
     if @write_only_store
-      if write_only_backend = @write_only_store.instance_variable_get('@backend')
+      write_only_backend = @write_only_store.instance_variable_get('@backend') || @write_only_store.instance_variable_get('@data')
+      if write_only_backend
         write_only_backend.touch key if write_only_backend.respond_to?(:touch)
       end
     end
