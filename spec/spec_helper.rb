@@ -2,6 +2,7 @@ $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'double_write_cache_stores'
 require 'active_support'
 require 'dalli'
+require 'dalli/cas/client'
 require 'pry'
 require 'padrino-cache'
 
