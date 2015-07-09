@@ -17,6 +17,20 @@ class DoubleWriteCacheStores::Client
     get_or_read_method_call key
   end
 
+  def get_cas(key)
+    @read_and_write_store.get_cas key
+  end
+
+  def set_cas(key, value, cas, options = nil)
+    cas_unique = @read_and_write_store.set_cas key, value, cas, options
+
+    if @write_only_store && cas_unique
+      set_or_write_method_call @write_only_store, key, value, options
+    end
+
+    cas_unique
+  end
+
   def read(key)
     get_or_read_method_call key
   end
