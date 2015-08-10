@@ -79,14 +79,15 @@ class DoubleWriteCacheStores::Client
   end
 
   def fetch(name, options = nil)
-    if @read_and_write_store.respond_to?(:fetch) && @write_only_store.respond_to?(:fetch)
+    if @read_and_write_store.respond_to?(:fetch) ||
+        (@write_only_store && @write_only_store.respond_to?(:fetch))
       if block_given?
         result = @read_and_write_store.fetch(name, options = nil) { yield }
-        @write_only_store.fetch(name, options = nil) { yield }
+        @write_only_store.fetch(name, options = nil) { yield } if @write_only_store
         result
       else
         result = @read_and_write_store.fetch(name, options = nil)
-        @write_only_store.fetch(name, options = nil)
+        @write_only_store.fetch(name, options = nil) if @write_only_store
         result
       end
     else
