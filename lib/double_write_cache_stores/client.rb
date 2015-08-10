@@ -103,7 +103,11 @@ class DoubleWriteCacheStores::Client
 
   def set_or_write_method_call cache_store, key, value, options
     if cache_store.respond_to? :set
-      cache_store.set key, value, options
+      if defined?(Dalli) && cache_store.is_a?(Dalli::Client)
+        cache_store.set key, value, options[:expires_in], options
+      else
+        cache_store.set key, value, options
+      end
     elsif cache_store.respond_to? :write
       cache_store.write key, value, options
     end
