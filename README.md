@@ -39,6 +39,25 @@ write_only_cache_store = ActiveSupport::Cache.lookup_store :dalli_store, 'localh
 set :cache, DoubleWriteCacheStores::Client.new(read_and_write_cache_store, write_only_cache_store)
 ````
 
+### Rails4
+
+`config/application.rb`
+
+```ruby
+read_and_write_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, 'localhost:11211'
+write_only_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, 'localhost:21211'
+
+config.cache_store = DoubleWriteCacheStores::Client.new(read_and_write_cache_store, write_only_cache_store)
+```
+
+#### in application
+
+```ruby
+Rails.cache.fetch("key") do
+  "value"
+end
+```
+
 ## Contributing
 
 1. Fork it ( http://github.com/hirocaster/double_write_cache_stores/fork )
