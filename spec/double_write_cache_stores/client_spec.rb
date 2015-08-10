@@ -34,6 +34,9 @@ describe DoubleWriteCacheStores::Client do
       copy_cache_store.write 'key-a', 'example-value-a', :expires_in => 1.day
       copy_cache_store.write 'key-b', 'example-value-b', :expires_in => 1.day
     end
+
+    after { copy_cache_store.flush }
+
     it 'get multi-keys values from multi store' do
       results = copy_cache_store.read_multi('key-a', 'key-b', 'key-c')
       expect(results['key-a']).to eq 'example-value-a'
@@ -43,6 +46,36 @@ describe DoubleWriteCacheStores::Client do
 
     it 'returns values equal #get_multi' do
       expect(copy_cache_store.read_multi('key-a', 'key-b')).to eq copy_cache_store.get_multi('key-a', 'key-b')
+    end
+  end
+
+  describe '#fetch' do
+    before do
+      copy_cache_store.write 'key-a', 'example-value-a', :expires_in => 1.day
+    end
+
+    after { copy_cache_store.flush }
+
+    it 'returns value' do
+      expect(copy_cache_store.fetch('key-a')).to eq 'example-value-a'
+      expect(copy_cache_store.fetch('key-nil')).to eq nil
+    end
+
+    it 'get value and set value, block in args' do
+      expect(copy_cache_store.fetch('key-b')).to eq nil
+
+      copy_cache_store.fetch('key-b') do
+        'block-value-b'
+      end
+
+      expect(copy_cache_store.fetch('key-b')).to eq 'block-value-b'
+      expect(copy_cache_store.get('key-b')).to eq 'block-value-b'
+
+      result = copy_cache_store.fetch('key-b') do
+                 'not-overwrite-value'
+               end
+      expect(copy_cache_store.fetch('key-b')).to eq 'block-value-b'
+      expect(copy_cache_store.get('key-b')).to eq 'block-value-b'
     end
   end
 

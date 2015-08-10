@@ -78,6 +78,22 @@ class DoubleWriteCacheStores::Client
     end
   end
 
+  def fetch(name, options = nil)
+    if @read_and_write_store.respond_to?(:fetch) && @write_only_store.respond_to?(:fetch)
+      if block_given?
+        result = @read_and_write_store.fetch(name, options = nil) { yield }
+        @write_only_store.fetch(name, options = nil) { yield }
+        result
+      else
+        result = @read_and_write_store.fetch(name, options = nil)
+        @write_only_store.fetch(name, options = nil)
+        result
+      end
+    else
+      raise UnSupportException.new "Unsupported #fetch from client object."
+    end
+  end
+
   private
 
   def write_cache_store(key, value, options = nil)
