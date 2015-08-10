@@ -19,6 +19,10 @@ describe DoubleWriteCacheStores::Client do
     DoubleWriteCacheStores::Client.new read_and_write_store, write_only_store
   end
 
+  let :one_cache_store do
+    DoubleWriteCacheStores::Client.new read_and_write_store, nil
+  end
+
   describe '#write' do
     before do
       copy_cache_store.write 'key', 'example-value', :expires_in => 1.day
@@ -29,174 +33,157 @@ describe DoubleWriteCacheStores::Client do
     end
   end
 
-  describe '#read_multi' do
-    before do
-      copy_cache_store.write 'key-a', 'example-value-a', :expires_in => 1.day
-      copy_cache_store.write 'key-b', 'example-value-b', :expires_in => 1.day
-    end
-
-    after { copy_cache_store.flush }
-
-    it 'get multi-keys values from multi store' do
-      results = copy_cache_store.read_multi('key-a', 'key-b', 'key-c')
-      expect(results['key-a']).to eq 'example-value-a'
-      expect(results['key-b']).to eq 'example-value-b'
-      expect(results['key-c']).to eq nil
-    end
-
-    it 'returns values equal #get_multi' do
-      expect(copy_cache_store.read_multi('key-a', 'key-b')).to eq copy_cache_store.get_multi('key-a', 'key-b')
-    end
-  end
-
-  describe '#fetch' do
-    before do
-      copy_cache_store.write 'key-a', 'example-value-a', :expires_in => 1.day
-    end
-
-    after { copy_cache_store.flush }
-
-    it 'returns value' do
-      expect(copy_cache_store.fetch('key-a')).to eq 'example-value-a'
-      expect(copy_cache_store.fetch('key-nil')).to eq nil
-    end
-
-    it 'get value and set value, block in args' do
-      expect(copy_cache_store.fetch('key-b')).to eq nil
-
-      copy_cache_store.fetch('key-b') do
-        'block-value-b'
+  shared_examples "cache store example" do |cache_store|
+    describe '#read_multi' do
+      before do
+        cache_store.write 'key-a', 'example-value-a', :expires_in => 1.day
+        cache_store.write 'key-b', 'example-value-b', :expires_in => 1.day
       end
 
-      expect(copy_cache_store.fetch('key-b')).to eq 'block-value-b'
-      expect(copy_cache_store.get('key-b')).to eq 'block-value-b'
+      after { cache_store.flush }
 
-      result = copy_cache_store.fetch('key-b') do
-                 'not-overwrite-value'
-               end
-      expect(copy_cache_store.fetch('key-b')).to eq 'block-value-b'
-      expect(copy_cache_store.get('key-b')).to eq 'block-value-b'
-    end
-  end
+      it 'get multi-keys values from multi store' do
+        results = cache_store.read_multi('key-a', 'key-b', 'key-c')
+        expect(results['key-a']).to eq 'example-value-a'
+        expect(results['key-b']).to eq 'example-value-b'
+        expect(results['key-c']).to eq nil
+      end
 
-  describe 'set #[]=(key, value) and get #[](key)' do
-    it 'set value and get value' do
-      copy_cache_store['key'] = 'example-value'
-      expect(copy_cache_store['key']).to eq 'example-value'
-    end
-  end
-
-  describe '#delete' do
-    before do
-      copy_cache_store.write 'will-delete-key', 'example-will-delete-value', :expires_in => 1.day
-    end
-    it 'delete key-value' do
-      expect(read_and_write_store.read 'will-delete-key').to eq 'example-will-delete-value'
-      expect(write_only_store.read 'will-delete-key').to eq 'example-will-delete-value'
-
-      copy_cache_store.delete 'will-delete-key'
-
-      expect(read_and_write_store.read 'will-delete-key').to be_nil
-      expect(write_only_store.read 'will-delete-key').to be_nil
-    end
-  end
-
-  describe '#touch' do
-    let :options do
-      { :namespace => "app_v1", :compress => true }
-    end
-    let :support_touch_read_and_write_store do
-      Padrino::Cache::Store::Memcache.new(::Dalli::Client.new('localhost:11211', options))
-    end
-    let :support_touch_write_only_store do
-      Padrino::Cache::Store::Memcache.new(::Dalli::Client.new('localhost:21211', options))
-    end
-    let :support_touch_copy_cache_store do
-      DoubleWriteCacheStores::Client.new support_touch_read_and_write_store, support_touch_write_only_store
-    end
-    before do
-      support_touch_copy_cache_store.set 'touch-key', 'touch-value', :expires_in => 1.day
-    end
-
-    context 'Dalli::Client' do
-      it 'example' do
-        expect(support_touch_copy_cache_store.touch 'touch-key').to be true
-        expect(support_touch_copy_cache_store.touch 'non-set-key').to be nil
+      it 'returns values equal #get_multi' do
+        expect(cache_store.read_multi('key-a', 'key-b')).to eq cache_store.get_multi('key-a', 'key-b')
       end
     end
 
-    context 'ActiveSupport::Cache::DalliStore' do
-      let :double_write_dalli_store do
-        DoubleWriteCacheStores::Client.new ActiveSupport::Cache::DalliStore.new('localhost:11211', options), ActiveSupport::Cache::DalliStore.new('localhost:21211', options)
+    describe '#fetch' do
+      before do
+        cache_store.write 'key-a', 'example-value-a', :expires_in => 1.day
       end
+
+      after { cache_store.flush }
+
+      it 'returns value' do
+        expect(cache_store.fetch('key-a')).to eq 'example-value-a'
+        expect(cache_store.fetch('key-nil')).to eq nil
+      end
+
+      it 'get value and set value, block in args' do
+        expect(cache_store.fetch('key-b')).to eq nil
+
+        cache_store.fetch('key-b') do
+          'block-value-b'
+        end
+
+        expect(cache_store.fetch('key-b')).to eq 'block-value-b'
+        expect(cache_store.get('key-b')).to eq 'block-value-b'
+
+        result = cache_store.fetch('key-b') do
+          'not-overwrite-value'
+        end
+        expect(cache_store.fetch('key-b')).to eq 'block-value-b'
+        expect(cache_store.get('key-b')).to eq 'block-value-b'
+      end
+    end
+
+    describe '#delete' do
+      before do
+        copy_cache_store.write 'will-delete-key', 'example-will-delete-value', :expires_in => 1.day
+      end
+      it 'delete key-value' do
+        expect(read_and_write_store.read 'will-delete-key').to eq 'example-will-delete-value'
+        expect(write_only_store.read 'will-delete-key').to eq 'example-will-delete-value'
+
+        copy_cache_store.delete 'will-delete-key'
+
+        expect(read_and_write_store.read 'will-delete-key').to be_nil
+        expect(write_only_store.read 'will-delete-key').to be_nil
+      end
+    end
+
+    describe '#touch' do
+      let(:expire_ttl) { 1 }
 
       before do
-        double_write_dalli_store.set 'touch-key', 'touch-valule', :expires_in => 1.day
+        cache_store.set 'touch-key', 'touch-value', :expires_in => expire_ttl
       end
 
-      it 'example' do
-        expect(double_write_dalli_store.touch 'touch-key').to be true
-        expect(double_write_dalli_store.touch 'non-set-key').to be nil
+      it 'expired value, not touched' do
+        sleep expire_ttl
+        expect(cache_store.read 'touch-key').to eq nil
+      end
+
+      it 'expired value, touched expired' do
+        expect(cache_store.touch 'touch-key', expire_ttl).to be true
+        sleep expire_ttl
+        expect(cache_store.read 'touch-key').to eq nil
+      end
+
+      it 'returns value, before touched key' do
+        expect(cache_store.touch 'touch-key').to be true
+        sleep expire_ttl
+        expect(cache_store.read  'touch-key').to eq 'touch-value'
       end
     end
-  end
 
-  describe '#read' do
-    context 'when standard case' do
+    describe '#read' do
       before do
-        copy_cache_store.write 'key', 'example-read-value', :expires_in => 1.day
+        cache_store.write 'key', 'example-read-value', :expires_in => 1.day
       end
-      it 'get read key value from multi store' do
-        expect(copy_cache_store.read 'key').to eq 'example-read-value'
+      it 'returns writed value' do
+        expect(cache_store.read 'key').to eq 'example-read-value'
       end
-      it 'not get no set key-value' do
-        expect(copy_cache_store.read 'not-set-key').to be_nil
-      end
-    end
-    context 'when not set copy cache store' do
-      let :not_copy_cache_store do
-        DoubleWriteCacheStores::Client.new read_and_write_store
-      end
-      before do
-        not_copy_cache_store.write 'no-copy-key', 'example-read-value', :expires_in => 1.day
-      end
-      it 'not sync cache store' do
-        expect(read_and_write_store.read 'no-copy-key').to eq 'example-read-value'
-        expect(write_only_store.read 'no-copy-key').to be_nil
+      it 'returns nil, not writed value' do
+        expect(cache_store.read 'not-set-key').to eq nil
       end
     end
-  end
 
-  describe '#flush' do
-    context 'when not support flush method in cache store' do
+    describe '#flush' do
       before do
         copy_cache_store.write 'will-flush-key', 'will-flush-value', :expires_in => 1.day
       end
       it 'example' do
+        expect(copy_cache_store.read 'will-flush-key').to eq 'will-flush-value'
         expect(copy_cache_store.flush).to eq true
-        expect(copy_cache_store.read 'will-flush-key').to be_nil
+        expect(copy_cache_store.read 'will-flush-key').to eq nil
       end
     end
-    context 'when support flush method in backend cache store' do
-      let :options do
-        { :namespace => "app_v1", :compress => true }
+
+    describe '#[]=(key,value) and get #[](key)' do
+      it 'set value and get value' do
+        cache_store['key'] = 'example-value'
+        expect(cache_store['key']).to eq 'example-value'
       end
-      let :support_flash_read_and_write_store do
-        Padrino::Cache::Store::Memcache.new(::Dalli::Client.new('localhost:11211', options))
+    end
+  end
+
+  describe "shard example" do
+    context "ActiveSupport :dalli_store" do
+      read_and_write_store = ActiveSupport::Cache.lookup_store :dalli_store, 'localhost:11211'
+      write_only_store = ActiveSupport::Cache.lookup_store :dalli_store, 'localhost:21211'
+
+      context "double cache store" do
+        copy_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, write_only_store)
+        it_behaves_like "cache store example", copy_cache_store
       end
-      let :support_flash_write_only_store do
-        Padrino::Cache::Store::Memcache.new(::Dalli::Client.new('localhost:21211', options))
+
+      context "one cache store object" do
+        one_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, nil)
+        it_behaves_like "cache store example", one_cache_store
       end
-      let :support_flash_copy_cache_store do
-        DoubleWriteCacheStores::Client.new support_flash_read_and_write_store, support_flash_write_only_store
+    end
+
+    context "Dalli::Client" do
+      options = { :namespace => "app_v1", :compress => true }
+      read_and_write_store = Dalli::Client.new('localhost:11211', options)
+      write_only_store = Dalli::Client.new('localhost:21211', options)
+
+      context "double cache store" do
+        copy_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, write_only_store)
+        it_behaves_like "cache store example", copy_cache_store
       end
-      before do
-        support_flash_copy_cache_store.set 'will-flush-key',  'will-flush-value', :expires_in => 1.day
-      end
-      it 'example' do
-        expect(support_flash_copy_cache_store.get 'will-flush-key').to eq 'will-flush-value'
-        expect(support_flash_copy_cache_store.flush).to be true
-        expect(support_flash_copy_cache_store.get 'will-flush-key').to be_nil
+
+      context "one cache store" do
+        one_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store)
+        it_behaves_like "cache store example", one_cache_store
       end
     end
   end
