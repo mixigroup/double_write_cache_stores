@@ -29,6 +29,23 @@ describe DoubleWriteCacheStores::Client do
     end
   end
 
+  describe '#read_multi' do
+    before do
+      copy_cache_store.write 'key-a', 'example-value-a', :expires_in => 1.day
+      copy_cache_store.write 'key-b', 'example-value-b', :expires_in => 1.day
+    end
+    it 'get multi-keys values from multi store' do
+      results = copy_cache_store.read_multi('key-a', 'key-b', 'key-c')
+      expect(results['key-a']).to eq 'example-value-a'
+      expect(results['key-b']).to eq 'example-value-b'
+      expect(results['key-c']).to eq nil
+    end
+
+    it 'returns values equal #get_multi' do
+      expect(copy_cache_store.read_multi('key-a', 'key-b')).to eq copy_cache_store.get_multi('key-a', 'key-b')
+    end
+  end
+
   describe 'set #[]=(key, value) and get #[](key)' do
     it 'set value and get value' do
       copy_cache_store['key'] = 'example-value'

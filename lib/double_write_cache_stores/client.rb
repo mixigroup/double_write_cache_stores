@@ -17,6 +17,10 @@ class DoubleWriteCacheStores::Client
     get_or_read_method_call key
   end
 
+  def get_multi(*keys)
+    get_multi_or_read_multi_method_call *keys
+  end
+
   def get_cas(key)
     @read_and_write_store.get_cas key
   end
@@ -33,6 +37,10 @@ class DoubleWriteCacheStores::Client
 
   def read(key)
     get_or_read_method_call key
+  end
+
+  def read_multi(*keys)
+    get_multi_or_read_multi_method_call *keys
   end
 
   def delete(key)
@@ -90,6 +98,16 @@ class DoubleWriteCacheStores::Client
       @read_and_write_store.get key
     elsif @read_and_write_store.respond_to? :read
       @read_and_write_store.read key
+    end
+  end
+
+  def get_multi_or_read_multi_method_call(*keys)
+    if @read_and_write_store.respond_to? :get_multi
+      @read_and_write_store.get_multi *keys
+    elsif @read_and_write_store.respond_to? :read_multi
+      @read_and_write_store.read_multi *keys
+    else
+      raise UnSupportException.new "Unsupported multi keys get or read from client object."
     end
   end
 
