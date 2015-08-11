@@ -60,12 +60,16 @@ class DoubleWriteCacheStores::Client
     write_cache_store key, value, options
   end
 
-  def touch(key)
+  def touch(key, ttl=nil)
     result = false
-    read_and_write_backend = @read_and_write_store.instance_variable_get('@backend') || @read_and_write_store.instance_variable_get('@data')
-    if read_and_write_backend && read_and_write_backend.respond_to?(:touch)
-      result = read_and_write_backend.touch key
-      write_only_store_touch key
+    if defined?(Dalli) && @read_and_write_store.is_a?(Dalli::Client)
+      result = @read_and_write_store.touch key, ttl
+    else
+      read_and_write_backend = @read_and_write_store.instance_variable_get('@backend') || @read_and_write_store.instance_variable_get('@data')
+      if read_and_write_backend && read_and_write_backend.respond_to?(:touch)
+        result = read_and_write_backend.touch key, ttl
+        write_only_store_touch key, ttl
+      end
     end
     result
   end
@@ -79,14 +83,15 @@ class DoubleWriteCacheStores::Client
   end
 
   def fetch(name, options = nil)
-    if @read_and_write_store.respond_to?(:fetch) && @write_only_store.respond_to?(:fetch)
+    if @read_and_write_store.respond_to?(:fetch) ||
+        (@write_only_store && @write_only_store.respond_to?(:fetch))
       if block_given?
         result = @read_and_write_store.fetch(name, options = nil) { yield }
-        @write_only_store.fetch(name, options = nil) { yield }
+        @write_only_store.fetch(name, options = nil) { yield } if @write_only_store
         result
       else
         result = @read_and_write_store.fetch(name, options = nil)
-        @write_only_store.fetch(name, options = nil)
+        @write_only_store.fetch(name, options = nil) if @write_only_store
         result
       end
     else
@@ -103,7 +108,12 @@ class DoubleWriteCacheStores::Client
 
   def set_or_write_method_call cache_store, key, value, options
     if cache_store.respond_to? :set
-      cache_store.set key, value, options
+      if defined?(Dalli) && cache_store.is_a?(Dalli::Client)
+        ttl = options[:expires_in] if options
+        cache_store.set key, value, ttl, options
+      else
+        cache_store.set key, value, options
+      end
     elsif cache_store.respond_to? :write
       cache_store.write key, value, options
     end
@@ -138,11 +148,15 @@ class DoubleWriteCacheStores::Client
     end
   end
 
-  def write_only_store_touch(key)
+  def write_only_store_touch(key, ttl)
     if @write_only_store
-      write_only_backend = @write_only_store.instance_variable_get('@backend') || @write_only_store.instance_variable_get('@data')
-      if write_only_backend
-        write_only_backend.touch key if write_only_backend.respond_to?(:touch)
+      if defined?(Dalli) && @write_only_store.is_a?(Dalli::Client)
+        @write_only_store.touch key, ttl
+      else
+        write_only_backend = @write_only_store.instance_variable_get('@backend') || @write_only_store.instance_variable_get('@data')
+        if write_only_backend
+          write_only_backend.touch(key, ttl) if write_only_backend.respond_to?(:touch)
+        end
       end
     end
   end
