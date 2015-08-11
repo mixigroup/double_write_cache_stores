@@ -11,7 +11,7 @@ describe DoubleWriteCacheStores::Client do
 
   describe '#initialize' do
     it 'different cache store instance' do
-      expect{ subject.new read_and_write_store, 'bad instance object' }.to raise_error
+      expect{ DoubleWriteCacheStores::Client.new read_and_write_store, 'bad instance object' }.to raise_error RuntimeError
     end
   end
 
