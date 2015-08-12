@@ -153,6 +153,34 @@ describe DoubleWriteCacheStores::Client do
         expect(cache_store['key']).to eq 'example-value'
       end
     end
+
+    describe 'cas' do
+      describe '#get_cas' do
+        before do
+          cache_store.set_cas 'get-cas-key', 'get-cas-value'
+        end
+
+        it 'example' do
+          expect(cache_store.get_cas('get-cas-key')[0]).to eq 'get-cas-value'
+          expect(cache_store.get_cas('get-cas-key')[1]).to be_kind_of(Integer)
+        end
+      end
+
+      describe '#set_cas' do
+        let :cas_unique do
+          cache_store.set_cas('set-cas-key', 'set-cas-value')
+          cache_store.get_cas('set-cas-key')[1]
+        end
+
+        it 'example' do
+          expect(cache_store.set_cas('set-cas-key', 'set-cas-value', cas_unique)).to be_kind_of(Integer)
+        end
+
+        it 'returns false, not set cache because different cas_unique' do
+          expect(cache_store.set_cas('set-cas-key', 'set-cas-value', cas_unique - 1)).to eq false
+        end
+      end
+    end
   end
 
   describe "shard example" do
@@ -184,63 +212,6 @@ describe DoubleWriteCacheStores::Client do
       context "one cache store" do
         one_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store)
         it_behaves_like "cache store example", one_cache_store
-      end
-    end
-  end
-
-  describe "#get_cas" do
-    context "when support get_cas method in backend cache store" do
-      let :support_get_cas_cache_store do
-        read_and_write = ::Dalli::Client.new(['localhost:11211'])
-        write_only = ::Dalli::Client.new(['localhost:21211'])
-        DoubleWriteCacheStores::Client.new read_and_write, write_only
-      end
-
-      before do
-        support_get_cas_cache_store.set 'cas-dalli-key', 'cas-dalli-value'
-      end
-
-      it 'example' do
-        expect(support_get_cas_cache_store.get_cas('cas-dalli-key')[0]).to eq 'cas-dalli-value'
-        expect(support_get_cas_cache_store.get_cas('cas-dalli-key')[1]).to be_kind_of(Integer)
-      end
-    end
-
-    context "when doesn't support get_cas method in backend cache store" do
-      let :not_support_get_cas_cache_store do
-        DoubleWriteCacheStores::Client.new ActiveSupport::Cache::DalliStore.new('localhost:11211'), ActiveSupport::Cache::DalliStore.new('localhost:21211')
-      end
-
-      it 'should raise NoMethodError' do
-        expect{ not_support_get_cas_cache_store.get_cas 'cas-key' }.to raise_error(NoMethodError)
-      end
-    end
-  end
-
-  describe "#set_cas" do
-    context "when support set_cas method in backend cache store" do
-      let :support_set_cas_cache_store do
-        read_and_write = ::Dalli::Client.new(['localhost:11211'])
-        write_only = ::Dalli::Client.new(['localhost:21211'])
-        DoubleWriteCacheStores::Client.new read_and_write, write_only
-      end
-      let :cas_unique do
-        support_set_cas_cache_store.set('cas-dalli-key', 'cas-value')
-        support_set_cas_cache_store.get_cas('cas-dalli-key')[1]
-      end
-
-      it 'example' do
-        expect(support_set_cas_cache_store.set_cas('cas-dalli-key', 'cas-dalli-value', cas_unique)).to be_kind_of(Integer)
-      end
-    end
-
-    context "when doesn't support set_cas method in backend cache store" do
-      let :not_support_set_cas_cache_store do
-        DoubleWriteCacheStores::Client.new ActiveSupport::Cache::DalliStore.new('localhost:11211'), ActiveSupport::Cache::DalliStore.new('localhost:21211')
-      end
-
-      it 'should raise NoMethodError' do
-        expect{ not_support_set_cas_cache_store.set_cas('cas-key', 'cas-value', 1) }.to raise_error(NoMethodError)
       end
     end
   end

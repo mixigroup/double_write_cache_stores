@@ -22,11 +22,21 @@ class DoubleWriteCacheStores::Client
   end
 
   def get_cas(key)
-    @read_and_write_store.get_cas key
+    if @read_and_write_store.respond_to? :get_cas
+      @read_and_write_store.get_cas key
+    elsif @read_and_write_store.respond_to? :read_cas
+      @read_and_write_store.read_cas key
+    end
   end
 
-  def set_cas(key, value, cas, options = nil)
-    cas_unique = @read_and_write_store.set_cas key, value, cas, options
+  def set_cas(key, value, cas=0, options=nil)
+    cas_unique = if @read_and_write_store.respond_to? :set_cas
+                   @read_and_write_store.set_cas key, value, cas, options
+                 elsif @read_and_write_store.respond_to? :read_cas
+                   options ||= {}
+                   options[:cas] = cas
+                   @read_and_write_store.write_cas key, value, options
+                 end
 
     if @write_only_store && cas_unique
       set_or_write_method_call @write_only_store, key, value, options
