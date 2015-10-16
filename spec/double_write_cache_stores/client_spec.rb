@@ -33,38 +33,6 @@ describe DoubleWriteCacheStores::Client do
     end
   end
 
-  describe '#increment'do
-    let(:key) {'key-increment'}
-    before { cache_store.set(key, 0, raw: true) }
-    after  { cache_store.flush }
-
-    context 'when cache_store has single cache' do
-      let(:cache_store) { one_cache_store }
-      it 'increase value' do
-        expect(cache_store.increment key).to eq 1
-        expect(read_and_write_store.read key).to eq '1'
-        expect(write_only_store.read key).to eq nil
-
-        expect(cache_store.increment key, 2).to eq 3
-        expect(read_and_write_store.read key).to eq '3'
-        expect(write_only_store.read key).to eq nil
-      end
-    end
-
-    context 'when cache_store has double cache' do
-      let(:cache_store) { copy_cache_store }
-      it 'increase value' do
-        expect(cache_store.increment key).to eq 1
-        expect(read_and_write_store.read key).to eq '1'
-        expect(write_only_store.read key).to eq '1'
-
-        expect(cache_store.increment key, 2).to eq 3
-        expect(read_and_write_store.read key).to eq '3'
-        expect(write_only_store.read key).to eq '3'
-      end
-    end
-  end
-
   shared_examples "cache store example" do |cache_store|
     describe '#read_multi' do
       before do
@@ -176,6 +144,19 @@ describe DoubleWriteCacheStores::Client do
         expect(copy_cache_store.read 'will-flush-key').to eq 'will-flush-value'
         expect(copy_cache_store.flush).to eq true
         expect(copy_cache_store.read 'will-flush-key').to eq nil
+      end
+    end
+
+    describe '#increment' do
+      let(:key) { 'key-increment' }
+      before    { cache_store.set(key, 0, raw: true) }
+      after     { cache_store.flush }
+
+      it 'increases value' do
+        expect(cache_store.increment key).to eq 1
+        expect(cache_store.read key).to eq '1'
+        expect(cache_store.increment key, 2).to eq 3
+        expect(cache_store.read key).to eq '3'
       end
     end
 
