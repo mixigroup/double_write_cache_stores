@@ -109,7 +109,7 @@ class DoubleWriteCacheStores::Client
     end
   end
 
-  def increment(key, amount = 1, options = nil)
+  def increment(key, amount = 1, options = {})
     increment_cache_store key, amount, options
   end
   alias_method :incr, :increment
@@ -162,11 +162,13 @@ class DoubleWriteCacheStores::Client
     if cache_store.respond_to? :incr
       if defined?(Dalli) && cache_store.is_a?(Dalli::Client)
         ttl = options[:expires_in] if options
-        cache_store.incr key, amount, ttl, options
+        initial = options.has_key?(:initial) ? options[:initial] : amount
+        cache_store.incr key, amount, ttl, initial
       else
         cache_store.incr key, amount, options
       end
     elsif cache_store.respond_to? :increment
+      options[:initial] = amount unless options.has_key?(:initial)
       cache_store.increment key, amount, options
     end
   end

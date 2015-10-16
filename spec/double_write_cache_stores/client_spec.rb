@@ -152,11 +152,47 @@ describe DoubleWriteCacheStores::Client do
       before    { cache_store.set(key, 0, raw: true) }
       after     { cache_store.flush }
 
-      it 'increases value' do
-        expect(cache_store.increment key).to eq 1
-        expect(cache_store.read key).to eq '1'
-        expect(cache_store.increment key, 2).to eq 3
-        expect(cache_store.read key).to eq '3'
+      context 'when initial value do not exist' do
+        it 'increases value' do
+          expect(cache_store.increment key).to eq 1
+          expect(cache_store.read key).to eq '1'
+          expect(cache_store.increment key, 2).to eq 3
+          expect(cache_store.read key).to eq '3'
+        end
+        it 'initializes and increases value' do
+          cache_store.delete(key)
+          expect(cache_store.increment key).to eq 1
+          expect(cache_store.read key).to eq '1'
+          expect(cache_store.increment key, 2).to eq 3
+          expect(cache_store.read key).to eq '3'
+          cache_store.delete(key)
+          expect(cache_store.increment key, 2).to eq 2
+          expect(cache_store.read key).to eq '2'
+          expect(cache_store.increment key).to eq 3
+          expect(cache_store.read key).to eq '3'
+        end
+      end
+
+      context 'when initial value exists' do
+        let(:opt) { {initial: 12345678} }
+        it 'increases value' do
+          expect(cache_store.increment key, 1, opt).to eq 1
+          expect(cache_store.read key).to eq '1'
+          expect(cache_store.increment key, 2, opt).to eq 3
+          expect(cache_store.read key).to eq '3'
+        end
+        it 'initializes and increases value' do
+          cache_store.delete(key)
+          expect(cache_store.increment key, 1, opt).to eq opt[:initial]
+          expect(cache_store.read key).to eq opt[:initial].to_s
+          expect(cache_store.increment key, 2, opt).to eq (opt[:initial] + 2)
+          expect(cache_store.read key).to eq (opt[:initial] + 2).to_s
+          cache_store.delete(key)
+          expect(cache_store.increment key, 2, opt).to eq opt[:initial]
+          expect(cache_store.read key).to eq opt[:initial].to_s
+          expect(cache_store.increment key, 1, opt).to eq (opt[:initial] + 1)
+          expect(cache_store.read key).to eq (opt[:initial] + 1).to_s
+        end
       end
     end
 
