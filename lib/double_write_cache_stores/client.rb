@@ -176,6 +176,7 @@ class DoubleWriteCacheStores::Client
         initial = options.has_key?(:initial) ? options[:initial] : amount
         cache_store.incr key, amount, ttl, initial
       else
+        options[:initial] = amount unless options.has_key?(:initial)
         cache_store.incr key, amount, options
       end
     elsif cache_store.respond_to? :increment
@@ -191,6 +192,7 @@ class DoubleWriteCacheStores::Client
         initial = options.has_key?(:initial) ? options[:initial] : 0
         cache_store.decr key, amount, ttl, initial
       else
+        options[:initial] = 0 unless options.has_key?(:initial)
         cache_store.decr key, amount, options
       end
     elsif cache_store.respond_to? :decrement
