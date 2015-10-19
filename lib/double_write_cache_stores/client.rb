@@ -114,6 +114,11 @@ class DoubleWriteCacheStores::Client
   end
   alias_method :incr, :increment
 
+  def decrement(key, amount = 1, options = {})
+    decrement_cache_store key, amount, options
+  end
+  alias_method :decr, :decrement
+  
   private
 
   def write_cache_store(key, value, options = nil)
@@ -158,6 +163,12 @@ class DoubleWriteCacheStores::Client
     incr_or_increment_method_call @write_only_store, key, amount, options
   end
 
+  def decrement_cache_store(key, amount, options)
+    rw_store_value = decr_or_decrement_method_call @read_and_write_store, key, amount, options
+    return rw_store_value unless @write_only_store
+    decr_or_decrement_method_call @write_only_store, key, amount, options
+  end
+
   def incr_or_increment_method_call(cache_store, key, amount, options)
     if cache_store.respond_to? :incr
       if defined?(Dalli) && cache_store.is_a?(Dalli::Client)
@@ -170,6 +181,21 @@ class DoubleWriteCacheStores::Client
     elsif cache_store.respond_to? :increment
       options[:initial] = amount unless options.has_key?(:initial)
       cache_store.increment key, amount, options
+    end
+  end
+
+  def decr_or_decrement_method_call(cache_store, key, amount, options)
+    if cache_store.respond_to? :decr
+      if defined?(Dalli) && cache_store.is_a?(Dalli::Client)
+        ttl = options[:expires_in] if options
+        initial = options.has_key?(:initial) ? options[:initial] : 0
+        cache_store.decr key, amount, ttl, initial
+      else
+        cache_store.decr key, amount, options
+      end
+    elsif cache_store.respond_to? :decrement
+      options[:initial] = 0 unless options.has_key?(:initial)
+      cache_store.decrement key, amount, options
     end
   end
 

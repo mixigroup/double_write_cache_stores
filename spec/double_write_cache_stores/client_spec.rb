@@ -196,6 +196,47 @@ describe DoubleWriteCacheStores::Client do
       end
     end
 
+    describe '#decrement' do
+      let(:key) { 'key-decrement' }
+      before    { cache_store.set(key, 101, raw: true) }
+      after     { cache_store.flush }
+
+      context 'when initial value do not exist' do
+        it 'decreases value' do
+          expect(cache_store.decrement key).to eq 100
+          expect(cache_store.read key).to eq '100'
+          expect(cache_store.decrement key, 2).to eq 98
+          expect(cache_store.read key).to eq '98 '
+        end
+        it 'initializes value' do
+          cache_store.delete(key)
+          expect(cache_store.decrement key).to eq 0
+          expect(cache_store.read key).to eq '0'
+          cache_store.delete(key)
+          expect(cache_store.decrement key, 2).to eq 0
+          expect(cache_store.read key).to eq '0'
+        end
+      end
+
+      context 'when initial value exists' do
+        let(:opt) { {initial: 12345678} }
+        it 'decreases value' do
+          expect(cache_store.decrement key, 1, opt).to eq 100
+          expect(cache_store.read key).to eq '100'
+          expect(cache_store.decrement key, 2, opt).to eq 98
+          expect(cache_store.read key).to eq '98 '
+        end
+        it 'initializes value' do
+          cache_store.delete(key)
+          expect(cache_store.decrement key, 1, opt).to eq opt[:initial]
+          expect(cache_store.read key).to eq opt[:initial].to_s
+          cache_store.delete(key)
+          expect(cache_store.decrement key, 2, opt).to eq opt[:initial]
+          expect(cache_store.read key).to eq opt[:initial].to_s
+        end
+      end
+    end
+
     describe '#[]=(key,value) and get #[](key)' do
       it 'set value and get value' do
         cache_store['key'] = 'example-value'
