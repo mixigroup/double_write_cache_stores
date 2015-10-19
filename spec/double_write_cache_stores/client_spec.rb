@@ -159,17 +159,13 @@ describe DoubleWriteCacheStores::Client do
           expect(cache_store.increment key, 2).to eq 3
           expect(cache_store.read key).to eq '3'
         end
-        it 'initializes and increases value' do
+        it 'initializes value' do
           cache_store.delete(key)
           expect(cache_store.increment key).to eq 1
           expect(cache_store.read key).to eq '1'
-          expect(cache_store.increment key, 2).to eq 3
-          expect(cache_store.read key).to eq '3'
           cache_store.delete(key)
           expect(cache_store.increment key, 2).to eq 2
           expect(cache_store.read key).to eq '2'
-          expect(cache_store.increment key).to eq 3
-          expect(cache_store.read key).to eq '3'
         end
       end
 
@@ -181,17 +177,13 @@ describe DoubleWriteCacheStores::Client do
           expect(cache_store.increment key, 2, opt).to eq 3
           expect(cache_store.read key).to eq '3'
         end
-        it 'initializes and increases value' do
+        it 'initializes value' do
           cache_store.delete(key)
           expect(cache_store.increment key, 1, opt).to eq opt[:initial]
           expect(cache_store.read key).to eq opt[:initial].to_s
-          expect(cache_store.increment key, 2, opt).to eq (opt[:initial] + 2)
-          expect(cache_store.read key).to eq (opt[:initial] + 2).to_s
           cache_store.delete(key)
           expect(cache_store.increment key, 2, opt).to eq opt[:initial]
           expect(cache_store.read key).to eq opt[:initial].to_s
-          expect(cache_store.increment key, 1, opt).to eq (opt[:initial] + 1)
-          expect(cache_store.read key).to eq (opt[:initial] + 1).to_s
         end
       end
     end
