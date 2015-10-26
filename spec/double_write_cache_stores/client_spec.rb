@@ -184,8 +184,6 @@ describe DoubleWriteCacheStores::Client do
           it 'increases value' do
             expect(cache_store.increment key, 1, opt).to eq 1
             expect(cache_store.read key).to eq '1'
-            expect(cache_store.increment key, 2, opt).to eq 3
-            expect(cache_store.read key).to eq '3'
           end
         end
         context 'when value does not exist' do
@@ -234,8 +232,6 @@ describe DoubleWriteCacheStores::Client do
           it 'decreases value' do
             expect(cache_store.decrement key, 1, opt).to eq 100
             expect(cache_store.read key).to eq '100'
-            expect(cache_store.decrement key, 2, opt).to eq 98
-            expect(cache_store.read key).to eq '98 '
           end
         end
         context 'when value does not exist' do
