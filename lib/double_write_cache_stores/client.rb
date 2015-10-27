@@ -172,8 +172,8 @@ class DoubleWriteCacheStores::Client
   def incr_or_increment_method_call(cache_store, key, amount, options)
     if defined?(Dalli) && cache_store.is_a?(Dalli::Client)
       ttl = options[:expires_in] if options
-      initial = options.has_key?(:initial) ? options[:initial] : amount
-      cache_store.incr key, amount, ttl, initial
+      default = options.has_key?(:initial) ? options[:initial] : amount
+      cache_store.incr key, amount, ttl, default
     elsif cache_store.respond_to? :increment
       options[:initial] = amount unless options.has_key?(:initial)
       cache_store.increment key, amount, options
@@ -183,8 +183,8 @@ class DoubleWriteCacheStores::Client
   def decr_or_decrement_method_call(cache_store, key, amount, options)
     if defined?(Dalli) && cache_store.is_a?(Dalli::Client)
       ttl = options[:expires_in] if options
-      initial = options.has_key?(:initial) ? options[:initial] : 0
-      cache_store.decr key, amount, ttl, initial
+      default = options.has_key?(:initial) ? options[:initial] : 0
+      cache_store.decr key, amount, ttl, default
     elsif cache_store.respond_to? :decrement
       options[:initial] = 0 unless options.has_key?(:initial)
       cache_store.decrement key, amount, options
