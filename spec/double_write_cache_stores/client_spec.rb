@@ -147,6 +147,13 @@ describe DoubleWriteCacheStores::Client do
       end
     end
 
+    shared_examples 'increment and decrement example' do |expected_value|
+      it "should eq #{expected_value}" do
+        is_expected.to eq expected_value
+        expect((cache_store.read key).to_i).to eq expected_value
+      end
+    end
+
     describe '#increment' do
       let(:key) { 'key-increment' }
       after     { cache_store.flush }
@@ -154,49 +161,36 @@ describe DoubleWriteCacheStores::Client do
       context 'when options[:initial] does not exist' do
         context 'when value exists' do
           before { cache_store.set(key, 0, raw: true) }
-          context 'when amount does not exist'do
-            it 'increases value' do
-              expect(cache_store.increment key).to eq 1
-              expect(cache_store.read key).to eq '1'
-            end
+          context 'when amount does not exist' do
+            subject { cache_store.increment key }
+            it_behaves_like 'increment and decrement example', 1
           end
           context 'when amount exists' do
-            it 'increases value' do
-              expect(cache_store.increment key, 2).to eq 2
-              expect(cache_store.read key).to eq '2'
-            end
+            subject { cache_store.increment key, 2 }
+            it_behaves_like 'increment and decrement example', 2
           end
         end
         context 'when value does not exist' do
           context 'when amount does not exist'do
-            it 'initializes value' do
-              expect(cache_store.increment key).to eq 1
-              expect(cache_store.read key).to eq '1'
-            end
+            subject { cache_store.increment key }
+            it_behaves_like 'increment and decrement example', 1
           end
           context 'when amount exists' do
-            it 'initializes value' do
-              expect(cache_store.increment key, 2).to eq 2
-              expect(cache_store.read key).to eq '2'
-            end
+            subject { cache_store.increment key, 2 }
+            it_behaves_like 'increment and decrement example', 2
           end
         end
       end
 
       context 'when options[:initial] exists' do
         let(:opt) { {initial: 12345678} }
+        subject { cache_store.increment key, 1, opt }
         context 'when value exists' do
           before { cache_store.set(key, 0, raw: true) }
-          it 'increases value' do
-            expect(cache_store.increment key, 1, opt).to eq 1
-            expect(cache_store.read key).to eq '1'
-          end
+          it_behaves_like 'increment and decrement example', 1
         end
         context 'when value does not exist' do
-          it 'initializes value' do
-            expect(cache_store.increment key, 1, opt).to eq opt[:initial]
-            expect(cache_store.read key).to eq opt[:initial].to_s
-          end
+          it_behaves_like 'increment and decrement example', 12345678
         end
       end
     end
@@ -209,48 +203,35 @@ describe DoubleWriteCacheStores::Client do
         context 'when value exists' do
           before { cache_store.set(key, 101, raw: true) }
           context 'when amount does not exist'do
-            it 'decreases value' do
-              expect(cache_store.decrement key).to eq 100
-              expect(cache_store.read key).to eq '100'
-            end
+            subject { cache_store.decrement key }
+            it_behaves_like 'increment and decrement example', 100
           end
           context 'when amount exists' do
-            it 'decreases value' do
-              expect(cache_store.decrement key, 2).to eq 99
-              expect(cache_store.read key).to eq '99 '
-            end
+            subject { cache_store.decrement key, 2 }
+            it_behaves_like 'increment and decrement example', 99
           end
         end
         context 'when value does not exist' do
           context 'when amount does not exist'do
-            it 'initializes value' do
-              expect(cache_store.decrement key).to eq 0
-              expect(cache_store.read key).to eq '0'
-            end
+            subject { cache_store.decrement key }
+            it_behaves_like 'increment and decrement example', 0
           end
           context 'when amount exists' do
-            it 'initializes value' do
-              expect(cache_store.decrement key, 2).to eq 0
-              expect(cache_store.read key).to eq '0'
-            end
+            subject { cache_store.decrement key, 2 }
+            it_behaves_like 'increment and decrement example', 0
           end
         end
       end
 
       context 'when options[:initial] exists' do
         let(:opt) { {initial: 12345678} }
+        subject { cache_store.decrement key, 1, opt }
         context 'when value exists' do
           before { cache_store.set(key, 101, raw: true) }
-          it 'decreases value' do
-            expect(cache_store.decrement key, 1, opt).to eq 100
-            expect(cache_store.read key).to eq '100'
-          end
+          it_behaves_like 'increment and decrement example', 100
         end
         context 'when value does not exist' do
-          it 'initializes value' do
-            expect(cache_store.decrement key, 1, opt).to eq opt[:initial]
-            expect(cache_store.read key).to eq opt[:initial].to_s
-          end
+          it_behaves_like 'increment and decrement example', 12345678
         end
       end
     end
