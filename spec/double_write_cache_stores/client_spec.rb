@@ -147,6 +147,91 @@ describe DoubleWriteCacheStores::Client do
       end
     end
 
+    shared_examples 'read cache after increment or decrement example' do
+      before { cache_store.set(key, 10, raw: true) }
+      it { expect((cache_store.read key).to_i).to eq expected_value }
+    end
+
+    describe '#increment' do
+      let(:key) { 'key-increment' }
+      after     { cache_store.flush }
+
+      it_behaves_like 'read cache after increment or decrement example' do
+        let!(:expected_value) { cache_store.increment key }
+      end
+
+      context 'when options[:initial] does not exist' do
+        context 'when value exists' do
+          before { cache_store.set(key, 0, raw: true) }
+          context 'when amount does not exist' do
+            it { expect(cache_store.increment key).to eq 1 }
+          end
+          context 'when amount exists' do
+            it { expect(cache_store.increment key, 2).to eq 2 }
+          end
+        end
+        context 'when value does not exist' do
+          context 'when amount does not exist' do
+            it { expect(cache_store.increment key).to eq 1 }
+          end
+          context 'when amount exists' do
+            it { expect(cache_store.increment key, 2).to eq 2 }
+          end
+        end
+      end
+
+      context 'when options[:initial] exists' do
+        let(:opt) { { initial: 12345678 } }
+        context 'when value exists' do
+          before { cache_store.set(key, 0, raw: true) }
+          it { expect(cache_store.increment key, 1, opt).to eq 1 }
+        end
+        context 'when value does not exist' do
+          it { expect(cache_store.increment key, 1, opt).to eq opt[:initial] }
+        end
+      end
+    end
+
+    describe '#decrement' do
+      let(:key) { 'key-decrement' }
+      after     { cache_store.flush }
+
+      it_behaves_like 'read cache after increment or decrement example' do
+        let!(:expected_value) { cache_store.decrement key }
+      end
+
+      context 'when options[:initial] does not exist' do
+        context 'when value exists' do
+          before { cache_store.set(key, 101, raw: true) }
+          context 'when amount does not exist' do
+            it { expect(cache_store.decrement key).to eq 100 }
+          end
+          context 'when amount exists' do
+            it { expect(cache_store.decrement key, 2).to eq 99 }
+          end
+        end
+        context 'when value does not exist' do
+          context 'when amount does not exist' do
+            it { expect(cache_store.decrement key).to eq 0 }
+          end
+          context 'when amount exists' do
+            it { expect(cache_store.decrement key, 2).to eq 0 }
+          end
+        end
+      end
+
+      context 'when options[:initial] exists' do
+        let(:opt) { { initial: 12345678 } }
+        context 'when value exists' do
+          before { cache_store.set(key, 101, raw: true) }
+          it { expect(cache_store.decrement key, 1, opt).to eq 100 }
+        end
+        context 'when value does not exist' do
+          it { expect(cache_store.decrement key, 1, opt).to eq opt[:initial] }
+        end
+      end
+    end
+
     describe '#[]=(key,value) and get #[](key)' do
       it 'set value and get value' do
         cache_store['key'] = 'example-value'
