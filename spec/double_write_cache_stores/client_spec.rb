@@ -163,7 +163,7 @@ describe DoubleWriteCacheStores::Client do
       context 'when options[:initial] does not exist' do
         context 'when value exists' do
           before { cache_store.set(key, 0, raw: true) }
-          context 'when amount does not exist'do
+          context 'when amount does not exist' do
             it { expect(cache_store.increment key).to eq 1 }
           end
           context 'when amount exists' do
@@ -171,7 +171,7 @@ describe DoubleWriteCacheStores::Client do
           end
         end
         context 'when value does not exist' do
-          context 'when amount does not exist'do
+          context 'when amount does not exist' do
             it { expect(cache_store.increment key).to eq 1 }
           end
           context 'when amount exists' do
@@ -203,7 +203,7 @@ describe DoubleWriteCacheStores::Client do
       context 'when options[:initial] does not exist' do
         context 'when value exists' do
           before { cache_store.set(key, 101, raw: true) }
-          context 'when amount does not exist'do
+          context 'when amount does not exist' do
             it { expect(cache_store.decrement key).to eq 100 }
           end
           context 'when amount exists' do
@@ -211,7 +211,7 @@ describe DoubleWriteCacheStores::Client do
           end
         end
         context 'when value does not exist' do
-          context 'when amount does not exist'do
+          context 'when amount does not exist' do
             it { expect(cache_store.decrement key).to eq 0 }
           end
           context 'when amount exists' do
