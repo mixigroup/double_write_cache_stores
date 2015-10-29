@@ -1,6 +1,6 @@
 # DoubleWriteCacheStores
 
-pre-warning(double write to cach store and other cache store) cache store wrapper. will switch cache store.
+pre-warming(double write to cach store and other cache store) cache store wrapper. will switch cache store.
 
 ## Convertible interface, get/set by cache store
 
