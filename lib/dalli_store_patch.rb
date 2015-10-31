@@ -1,11 +1,11 @@
 # monky patch
 # support cas interface for ActiveSupport::Cache::DalliStore
 module DalliStorePatch
-  def read_cas(name, options=nil)
+  def read_cas(name, options = nil)
     options ||= {}
     name = namespaced_key(name, options)
 
-    instrument(:get_cas, name) do |payload|
+    instrument(:get_cas, name) do |_payload|
       with { |c| c.get_cas(name) }
     end
   rescue Dalli::DalliError => e
@@ -14,12 +14,12 @@ module DalliStorePatch
     false
   end
 
-  def write_cas(name, value, options=nil)
+  def write_cas(name, value, options = nil)
     options ||= {}
     name = namespaced_key(name, options)
     expires_in = options[:expires_in]
 
-    instrument(:set_cas, name, value) do |payload|
+    instrument(:set_cas, name, value) do |_payload|
       cas = options.delete(:cas) || 0
       expires_in = options.delete(:expires_in)
       with { |c| c.set_cas(name, value, cas, expires_in, options) }
@@ -30,7 +30,6 @@ module DalliStorePatch
     false
   end
 end
-
 
 begin
   require "active_support"

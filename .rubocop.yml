@@ -1,0 +1,57 @@
+AllCops:
+  Exclude:
+    - "vendor/**/*"
+  DisplayCopNames: true
+
+Style/AsciiComments:
+  Enabled: false
+
+Style/BracesAroundHashParameters:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Style/ExtraSpacing:
+  Enabled: false
+
+Style/GuardClause:
+  MinBodyLength: 5
+
+Style/MethodDefParentheses:
+  EnforcedStyle: require_parentheses
+
+Style/ModuleFunction:
+  Enabled: false
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/IndentationConsistency:
+  EnforcedStyle: rails
+
+Style/SignalException:
+  EnforcedStyle: only_raise
+
+Style/HashSyntax:
+  EnforcedStyle: ruby19_no_mixed_keys
+  Exclude:
+    - "**/*.rake"
+    - "Rakefile"
+
+Metrics/LineLength:
+  Max: 160
+  Exclude:
+    - "db/migrate/*.rb"
+
+NumericLiterals:
+  MinDigits: 7
+
+Lint/AssignmentInCondition:
+  Enabled: false
+
+Lint/BlockAlignment:
+  Enabled: false
+
+Metrics/MethodLength:
+  Max: 12
