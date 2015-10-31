@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = DoubleWriteCacheStores::VERSION
   spec.authors       = ["hirocaster"]
   spec.email         = ["hohtsuka@gmail.com"]
-  spec.summary       = " Double write cache stores wrapper. "
-  spec.description   = " pre-warning(double write to cach store and other cache store) cache store wrapper. will switch cache store. "
+  spec.summary       = %q{ Double write cache stores wrapper. }
+  spec.description   = %q{ pre-warming(double write to cach store and other cache store) cache store wrapper. will switch cache st
   spec.homepage      = ""
   spec.license       = "MIT"
 
