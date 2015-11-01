@@ -27,6 +27,9 @@ Style/ModuleFunction:
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 
+Style/SingleSpaceBeforeFirstArg:
+  Enabled: false
+
 Style/IndentationConsistency:
   EnforcedStyle: rails
 
