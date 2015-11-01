@@ -56,7 +56,7 @@ describe DoubleWriteCacheStores::Client do
 
     describe '#fetch' do
       before do
-        cache_store.write "key-a", "example-value-a", expires_in: 1.day
+        cache_store.write "key-a", "example-value-a", expires_in: 1
       end
 
       after { cache_store.flush }
@@ -81,6 +81,13 @@ describe DoubleWriteCacheStores::Client do
         end
         expect(cache_store.fetch("key-b")).to eq "block-value-b"
         expect(cache_store.get("key-b")).to eq "block-value-b"
+
+        cache_store.fetch("key-c", expires_in: 1) do
+          "c-value"
+        end
+        expect(cache_store.fetch("key-c")).to eq "c-value"
+        sleep 2
+        expect(cache_store.get("key-c")).to be_nil
       end
     end
 

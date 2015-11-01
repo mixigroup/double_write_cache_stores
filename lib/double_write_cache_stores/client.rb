@@ -92,16 +92,30 @@ class DoubleWriteCacheStores::Client
     end
   end
 
-  def fetch(name, _options = nil)
+  def fetch(name, options = {})
     if @read_and_write_store.respond_to?(:fetch) ||
        (@write_only_store && @write_only_store.respond_to?(:fetch))
       if block_given?
-        result = @read_and_write_store.fetch(name, options = nil) { yield }
-        @write_only_store.fetch(name, options = nil) { yield } if @write_only_store
+        result = if @read_and_write_store.is_a? Dalli::Client
+                   ttl = options[:expires_in]
+                   @read_and_write_store.fetch(name, ttl, options) { yield }
+                 else
+                   @read_and_write_store.fetch(name, options) { yield }
+                 end
+
+        if @write_only_store
+          if @write_only_store.is_a? Dalli::Client
+            ttl = options[:expires_in]
+            @write_only_store.fetch(name, ttl, options) { yield }
+          else
+            @write_only_store.fetch(name, options) { yield }
+          end
+        end
+
         result
       else
-        result = @read_and_write_store.fetch(name, options = nil)
-        @write_only_store.fetch(name, options = nil) if @write_only_store
+        result = @read_and_write_store.fetch(name, options)
+        @write_only_store.fetch(name, options) if @write_only_store
         result
       end
     else
