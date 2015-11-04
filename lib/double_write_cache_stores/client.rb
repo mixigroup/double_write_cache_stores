@@ -163,9 +163,9 @@ class DoubleWriteCacheStores::Client
 
     def get_multi_or_read_multi_method_call(*keys)
       if @read_and_write_store.respond_to? :get_multi
-        @read_and_write_store.get_multi *keys
+        @read_and_write_store.get_multi(*keys)
       elsif @read_and_write_store.respond_to? :read_multi
-        @read_and_write_store.read_multi *keys
+        @read_and_write_store.read_multi(*keys)
       else
         raise UnSupportException.new "Unsupported multi keys get or read from client object."
       end
