@@ -18,7 +18,7 @@ class DoubleWriteCacheStores::Client
   end
 
   def get_multi(*keys)
-    get_multi_or_read_multi_method_call *keys
+    get_multi_or_read_multi_method_call(*keys)
   end
 
   def get_cas(key)
@@ -50,7 +50,7 @@ class DoubleWriteCacheStores::Client
   end
 
   def read_multi(*keys)
-    get_multi_or_read_multi_method_call *keys
+    get_multi_or_read_multi_method_call(*keys)
   end
 
   def delete(key)
