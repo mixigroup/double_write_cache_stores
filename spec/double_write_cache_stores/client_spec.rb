@@ -76,7 +76,7 @@ describe DoubleWriteCacheStores::Client do
         expect(cache_store.fetch("key-b")).to eq "block-value-b"
         expect(cache_store.get("key-b")).to eq "block-value-b"
 
-        result = cache_store.fetch("key-b") do
+        cache_store.fetch("key-b") do
           "not-overwrite-value"
         end
         expect(cache_store.fetch("key-b")).to eq "block-value-b"
