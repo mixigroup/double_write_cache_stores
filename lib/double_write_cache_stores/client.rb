@@ -119,7 +119,7 @@ class DoubleWriteCacheStores::Client
         result
       end
     else
-      raise UnSupportException.new "Unsupported #fetch from client object."
+      raise UnSupportException "Unsupported #fetch from client object."
     end
   end
 
