@@ -89,6 +89,20 @@ describe DoubleWriteCacheStores::Client do
         sleep 2
         expect(cache_store.get("key-c")).to be_nil
       end
+
+      it "Support force read option, convertible Rails.cache" do
+        cached_value = cache_store.fetch("key-c") do
+                         "block-value-c"
+                       end
+        expect(cache_store.fetch("key-c")).to eq "block-value-c"
+
+        new_value = cache_store.fetch("key-c", force: true) do
+                         "block-value-c-force"
+                       end
+
+        expect(new_value).to eq "block-value-c-force"
+        expect(cache_store.fetch("key-c")).to eq "block-value-c-force"
+      end
     end
 
     describe '#delete' do
