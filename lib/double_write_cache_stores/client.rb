@@ -96,6 +96,7 @@ class DoubleWriteCacheStores::Client
     if @read_and_write_store.respond_to?(:fetch) ||
        (@write_only_store && @write_only_store.respond_to?(:fetch))
       if block_given?
+        delete name if options[:force]
         result = if @read_and_write_store.is_a? Dalli::Client
                    ttl = options[:expires_in]
                    @read_and_write_store.fetch(name, ttl, options) { yield }
