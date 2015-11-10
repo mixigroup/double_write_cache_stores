@@ -1,43 +1,18 @@
 require "spec_helper"
 
 describe DoubleWriteCacheStores::Client do
-  let :read_and_write_store do
-    ActiveSupport::Cache.lookup_store :dalli_store, "localhost:11211"
-  end
-
-  let :write_only_store do
-    ActiveSupport::Cache.lookup_store :dalli_store, "localhost:21211"
-  end
-
   describe '#initialize' do
+    let(:options) { { namespace: "app_v1", compress: true } }
     it "different cache store instance" do
-      expect { DoubleWriteCacheStores::Client.new read_and_write_store, "bad instance object" }.to raise_error RuntimeError
-    end
-  end
-
-  let :copy_cache_store do
-    DoubleWriteCacheStores::Client.new read_and_write_store, write_only_store
-  end
-
-  let :one_cache_store do
-    DoubleWriteCacheStores::Client.new read_and_write_store, nil
-  end
-
-  describe '#write' do
-    before do
-      copy_cache_store.write "key", "example-value", expires_in: 1.day
-    end
-    it "set value to multi store" do
-      expect(read_and_write_store.read "key").to eq "example-value"
-      expect(write_only_store.read "key").to eq "example-value"
+      expect { DoubleWriteCacheStores::Client.new Dalli::Client.new("localhost:11211", options), "bad instance object" }.to raise_error RuntimeError
     end
   end
 
   shared_examples "cache store example" do |cache_store|
     describe '#read_multi' do
       before do
-        cache_store.write "key-a", "example-value-a", expires_in: 1.day
-        cache_store.write "key-b", "example-value-b", expires_in: 1.day
+        cache_store.write "key-a", "example-value-a", expires_in: 86400
+        cache_store.write "key-b", "example-value-b", expires_in: 86400
       end
 
       after { cache_store.flush }
@@ -107,16 +82,28 @@ describe DoubleWriteCacheStores::Client do
 
     describe '#delete' do
       before do
-        copy_cache_store.write "will-delete-key", "example-will-delete-value", expires_in: 1.day
+        cache_store.write "will-delete-key", "example-will-delete-value", expires_in: 86400
       end
+
       it "delete key-value" do
-        expect(read_and_write_store.read "will-delete-key").to eq "example-will-delete-value"
-        expect(write_only_store.read "will-delete-key").to eq "example-will-delete-value"
+        expect(cache_store.delete "will-delete-key").to be true
+        expect(cache_store.read "will-delete-key").to be_nil
 
-        copy_cache_store.delete "will-delete-key"
+        value = if cache_store.read_and_write_store.respond_to? :read
+                  cache_store.read_and_write_store.read "will-delete-key"
+                else
+                  cache_store.read_and_write_store.get "will-delete-key"
+                end
+        expect(value).to be_nil
 
-        expect(read_and_write_store.read "will-delete-key").to be_nil
-        expect(write_only_store.read "will-delete-key").to be_nil
+        if cache_store.write_only_store
+          value = if cache_store.write_only_store.respond_to? :read
+                    cache_store.write_only_store.read "will-delete-key"
+                  else
+                    cache_store.write_only_store.get "will-delete-key"
+                  end
+          expect(value).to be_nil
+        end
       end
     end
 
@@ -145,13 +132,45 @@ describe DoubleWriteCacheStores::Client do
       end
     end
 
+    describe '#write' do
+      before do
+        cache_store.write "key", "example-write-value", expires_in: 86400
+      end
+
+      it "returns writed value" do
+        expect(cache_store.read "key").to eq "example-write-value"
+      end
+
+      it "writed to read_and_write_store" do
+        value = if cache_store.read_and_write_store.respond_to? :get
+                  cache_store.read_and_write_store.get "key"
+                else
+                  cache_store.read_and_write_store.read "key"
+                end
+        expect(value).to eq "example-write-value"
+      end
+
+      if cache_store.write_only_store
+        it "writed to write_only_store" do
+          value = if cache_store.write_only_store.respond_to? :get
+                    cache_store.write_only_store.get "key"
+                  else
+                    cache_store.write_only_store.read "key"
+                  end
+          expect(value).to eq "example-write-value"
+        end
+      end
+    end
+
     describe '#read' do
       before do
-        cache_store.write "key", "example-read-value", expires_in: 1.day
+        cache_store.write "key", "example-read-value", expires_in: 86400
       end
+
       it "returns writed value" do
         expect(cache_store.read "key").to eq "example-read-value"
       end
+
       it "returns nil, not writed value" do
         expect(cache_store.read "not-set-key").to eq nil
       end
@@ -159,12 +178,29 @@ describe DoubleWriteCacheStores::Client do
 
     describe '#flush' do
       before do
-        copy_cache_store.write "will-flush-key", "will-flush-value", expires_in: 1.day
+        cache_store.write "will-flush-key", "will-flush-value", expires_in: 86400
       end
+
       it "example" do
-        expect(copy_cache_store.read "will-flush-key").to eq "will-flush-value"
-        expect(copy_cache_store.flush).to eq true
-        expect(copy_cache_store.read "will-flush-key").to eq nil
+        expect(cache_store.read "will-flush-key").to eq "will-flush-value"
+        expect(cache_store.flush).to eq true
+        expect(cache_store.read "will-flush-key").to eq nil
+
+        value = if cache_store.read_and_write_store.respond_to? :read
+                  cache_store.read_and_write_store.read "will-flush-key"
+                else
+                  cache_store.read_and_write_store.get "will-flush-key"
+                end
+        expect(value).to be_nil
+
+        if cache_store.write_only_store
+          value = if cache_store.write_only_store.respond_to? :read
+                    cache_store.write_only_store.read "will-flush-key"
+                  else
+                    cache_store.write_only_store.get "will-flush-key"
+                  end
+          expect(value).to be_nil
+        end
       end
     end
 
@@ -192,23 +228,31 @@ describe DoubleWriteCacheStores::Client do
           end
         end
         context "when value does not exist" do
-          context "when amount does not exist" do
-            it { expect(cache_store.increment key).to eq 1 }
-          end
-          context "when amount exists" do
-            it { expect(cache_store.increment key, 2).to eq 2 }
+          if DoubleWriteCacheStores.loaded_active_support? && cache_store.read_and_write_store.is_a?(ActiveSupport::Cache::MemCacheStore)
+            skip "Not support"
+          else
+            context "when amount does not exist" do
+              it { expect(cache_store.increment key).to eq 1 }
+            end
+            context "when amount exists" do
+              it { expect(cache_store.increment key, 2).to eq 2 }
+            end
           end
         end
       end
 
       context "when options[:initial] exists" do
-        let(:opt) { { initial: 12_345_678 } }
-        context "when value exists" do
-          before { cache_store.set(key, 0, raw: true) }
-          it { expect(cache_store.increment key, 1, opt).to eq 1 }
-        end
-        context "when value does not exist" do
-          it { expect(cache_store.increment key, 1, opt).to eq opt[:initial] }
+        if DoubleWriteCacheStores.loaded_active_support? && cache_store.read_and_write_store.is_a?(ActiveSupport::Cache::MemCacheStore)
+          skip "Not support"
+        else
+          let(:opt) { { initial: 12_345_678 } }
+          context "when value exists" do
+            before { cache_store.set(key, 0, raw: true) }
+            it { expect(cache_store.increment key, 1, opt).to eq 1 }
+          end
+          context "when value does not exist" do
+            it { expect(cache_store.increment key, 1, opt).to eq opt[:initial] }
+          end
         end
       end
     end
@@ -232,23 +276,31 @@ describe DoubleWriteCacheStores::Client do
           end
         end
         context "when value does not exist" do
-          context "when amount does not exist" do
-            it { expect(cache_store.decrement key).to eq 0 }
-          end
-          context "when amount exists" do
-            it { expect(cache_store.decrement key, 2).to eq 0 }
+          if DoubleWriteCacheStores.loaded_active_support? && cache_store.read_and_write_store.is_a?(ActiveSupport::Cache::MemCacheStore)
+            skip "Not support"
+          else
+            context "when amount does not exist" do
+              it { expect(cache_store.decrement key).to eq 0 }
+            end
+            context "when amount exists" do
+              it { expect(cache_store.decrement key, 2).to eq 0 }
+            end
           end
         end
       end
 
       context "when options[:initial] exists" do
-        let(:opt) { { initial: 12_345_678 } }
-        context "when value exists" do
-          before { cache_store.set(key, 101, raw: true) }
-          it { expect(cache_store.decrement key, 1, opt).to eq 100 }
-        end
-        context "when value does not exist" do
-          it { expect(cache_store.decrement key, 1, opt).to eq opt[:initial] }
+        if DoubleWriteCacheStores.loaded_active_support? && cache_store.read_and_write_store.is_a?(ActiveSupport::Cache::MemCacheStore)
+          skip "Not support"
+        else
+          let(:opt) { { initial: 12_345_678 } }
+          context "when value exists" do
+            before { cache_store.set(key, 101, raw: true) }
+            it { expect(cache_store.decrement key, 1, opt).to eq 100 }
+          end
+          context "when value does not exist" do
+            it { expect(cache_store.decrement key, 1, opt).to eq opt[:initial] }
+          end
         end
       end
     end
@@ -290,19 +342,41 @@ describe DoubleWriteCacheStores::Client do
   end
 
   describe "shard example" do
-    context "ActiveSupport :dalli_store" do
-      read_and_write_store = ActiveSupport::Cache.lookup_store :dalli_store, "localhost:11211"
-      write_only_store = ActiveSupport::Cache.lookup_store :dalli_store, "localhost:21211"
+    if DoubleWriteCacheStores.loaded_active_support?
+      context "ActiveSupport MemCacheStore" do
 
-      context "double cache store" do
-        copy_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, write_only_store)
-        it_behaves_like "cache store example", copy_cache_store
+        options = { raw: true, expires_in: 3600 }
+
+        read_and_write_store = ActiveSupport::Cache.lookup_store :mem_cache_store, "localhost:11211", options
+        write_only_store = ActiveSupport::Cache.lookup_store :mem_cache_store, "localhost:21211", options
+
+        context "double cache store" do
+          copy_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, write_only_store)
+          it_behaves_like "cache store example", copy_cache_store
+        end
+
+        context "one cache store object" do
+          one_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, nil)
+          it_behaves_like "cache store example", one_cache_store
+        end
       end
 
-      context "one cache store object" do
-        one_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, nil)
-        it_behaves_like "cache store example", one_cache_store
+      context "ActiveSupport :dalli_store in Dalli" do
+        read_and_write_store = ActiveSupport::Cache.lookup_store :dalli_store, "localhost:11211"
+        write_only_store = ActiveSupport::Cache.lookup_store :dalli_store, "localhost:21211"
+
+        context "double cache store" do
+          copy_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, write_only_store)
+          it_behaves_like "cache store example", copy_cache_store
+        end
+
+        context "one cache store object" do
+          one_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, nil)
+          it_behaves_like "cache store example", one_cache_store
+        end
       end
+    else
+      skip "Not load ActiveSupport"
     end
 
     context "Dalli::Client" do

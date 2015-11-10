@@ -32,7 +32,6 @@ module DalliStorePatch
 end
 
 begin
-  require "active_support"
   require "active_support/cache/dalli_store"
 
   ActiveSupport::Cache::DalliStore.send(:include, DalliStorePatch)

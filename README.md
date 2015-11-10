@@ -2,16 +2,11 @@
 
 pre-warming(double write to cach store and other cache store) cache store wrapper. will switch cache store.
 
-## Convertible interface, get/set by cache store
-
-- Padrino::Cache(moneta)
-- ActiveSupport::Cache::DalliStore(Dalli)
-- Padrino::Cache::Store::Memcache
-
 ## Support backend cache store
 
-- ActiveSupport::Cache::DalliStore(Dalli)
-- Padrino::Cache::Store::Memcache
+- ActiveSupport::Cache::MemCacheStore
+- ActiveSupport::Cache::DalliStore in Dalli
+- Dalli::Client
 
 ## Installation
 

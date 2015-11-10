@@ -1,4 +1,6 @@
 class DoubleWriteCacheStores::Client
+  attr_accessor :read_and_write_store, :write_only_store
+
   def initialize(read_and_write_store_servers, write_only_store_servers = nil)
     @read_and_write_store = read_and_write_store_servers
     if write_only_store_servers
@@ -54,8 +56,9 @@ class DoubleWriteCacheStores::Client
   end
 
   def delete(key)
-    @read_and_write_store.delete key
+    result = @read_and_write_store.delete key
     @write_only_store.delete key if @write_only_store
+    result
   end
 
   def []=(key, value)
@@ -72,7 +75,9 @@ class DoubleWriteCacheStores::Client
 
   def touch(key, ttl = nil)
     result = false
-    if defined?(Dalli) && @read_and_write_store.is_a?(Dalli::Client)
+    if defined?(Dalli) &&
+       (@read_and_write_store.is_a?(Dalli::Client) ||
+        @read_and_write_store.is_a?(ActiveSupport::Cache::MemCacheStore))
       result = @read_and_write_store.touch key, ttl
     else
       read_and_write_backend = @read_and_write_store.instance_variable_get("@backend") || @read_and_write_store.instance_variable_get("@data")
@@ -185,9 +190,9 @@ class DoubleWriteCacheStores::Client
     end
 
     def incr_or_increment_method_call(cache_store, key, amount, options)
-      if defined?(Dalli) && cache_store.is_a?(Dalli::Client)
-        ttl = options[:expires_in] if options
-        default = options.key?(:initial) ? options[:initial] : amount
+      ttl = options[:expires_in] if options
+      default = options.key?(:initial) ? options[:initial] : amount
+      if cache_store.is_a? Dalli::Client
         cache_store.incr key, amount, ttl, default
       elsif cache_store.respond_to? :increment
         options[:initial] = amount unless options.key?(:initial)
@@ -219,7 +224,9 @@ class DoubleWriteCacheStores::Client
 
     def write_only_store_touch(key, ttl)
       if @write_only_store
-        if defined?(Dalli) && @write_only_store.is_a?(Dalli::Client)
+        if defined?(Dalli) &&
+           (@read_and_write_store.is_a?(Dalli::Client) ||
+            @read_and_write_store.is_a?(ActiveSupport::Cache::MemCacheStore))
           @write_only_store.touch key, ttl
         else
           write_only_backend = @write_only_store.instance_variable_get("@backend") || @write_only_store.instance_variable_get("@data")
