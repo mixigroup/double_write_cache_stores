@@ -341,18 +341,6 @@ describe DoubleWriteCacheStores::Client do
     end
   end
 
-  shared_examples "not support middleware" do |copy_cache_store|
-    describe "#middleware" do
-      it "retuns ActiveSupport::Cache::Strategy::LocalCache::Middleware" do
-        read_and_write_store = copy_cache_store.read_and_write_store
-        write_only_store = copy_cache_store.write_only_store
-        allow(read_and_write_store).to receive(:middleware).exactly(0).times
-        allow(write_only_store).to receive(:middleware).exactly(0).times
-        expect(copy_cache_store.middleware).to eq nil
-      end
-    end
-  end
-
   describe "shard example" do
     if DoubleWriteCacheStores.loaded_active_support?
       context "ActiveSupport MemCacheStore" do
@@ -365,13 +353,6 @@ describe DoubleWriteCacheStores::Client do
         context "double cache store" do
           copy_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, write_only_store)
           it_behaves_like "cache store example", copy_cache_store
-
-          describe "#middleware" do
-            it "retuns ActiveSupport::Cache::Strategy::LocalCache::Middleware" do
-              allow(write_only_store).to receive(:middleware).exactly(0).times
-              expect(copy_cache_store.middleware).to be_a ActiveSupport::Cache::Strategy::LocalCache::Middleware
-            end
-          end
         end
 
         context "one cache store object" do
@@ -387,7 +368,6 @@ describe DoubleWriteCacheStores::Client do
         context "double cache store" do
           copy_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, write_only_store)
           it_behaves_like "cache store example", copy_cache_store
-          it_behaves_like "not support middleware", copy_cache_store
         end
 
         context "one cache store object" do
@@ -407,7 +387,6 @@ describe DoubleWriteCacheStores::Client do
       context "double cache store" do
         copy_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, write_only_store)
         it_behaves_like "cache store example", copy_cache_store
-        it_behaves_like "not support middleware", copy_cache_store
       end
 
       context "one cache store" do

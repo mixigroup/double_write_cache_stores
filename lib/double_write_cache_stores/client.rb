@@ -139,14 +139,6 @@ class DoubleWriteCacheStores::Client
   end
   alias_method :decr, :decrement
 
-  def middleware
-    if DoubleWriteCacheStores.loaded_active_support?
-      if @read_and_write_store.is_a? ActiveSupport::Cache::MemCacheStore
-        @read_and_write_store.middleware
-      end
-    end
-  end
-
   private
 
     def write_cache_store(key, value, options = nil)
