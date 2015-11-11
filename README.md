@@ -36,13 +36,16 @@ set :cache, DoubleWriteCacheStores::Client.new(read_and_write_cache_store, write
 
 ### Rails4
 
-`config/application.rb`
+`config/initializers/double_write_cache_stores.rb`
+
+Replace `MyApp`
 
 ```ruby
-read_and_write_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, 'localhost:11211'
-write_only_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, 'localhost:21211'
+options = { expires_in: 1.week, compress: true }
+read_and_write_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, 'localhost:11211', options
+write_only_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, 'localhost:21211', options
 
-config.cache_store = DoubleWriteCacheStores::Client.new(read_and_write_cache_store, write_only_cache_store)
+MyApp::Application.config.cache_store = DoubleWriteCacheStores::Client.new read_and_write_cache_store, write_only_cache_store
 ```
 
 #### in application
