@@ -45,7 +45,10 @@ options = { expires_in: 1.week, compress: true }
 read_and_write_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, 'localhost:11211', options
 write_only_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, 'localhost:21211', options
 
-MyApp::Application.config.cache_store = DoubleWriteCacheStores::Client.new read_and_write_cache_store, write_only_cache_store
+double_write_cache_stores = DoubleWriteCacheStores::Client.new read_and_write_cache_store, write_only_cache_store
+double_write_cache_stores.middleware
+
+MyApp::Application.config.cache_store = double_write_cache_stores
 ```
 
 #### in application
