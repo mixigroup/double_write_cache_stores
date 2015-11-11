@@ -1,16 +1,19 @@
 module DoubleWriteCacheStores
+  loaded_active_support = false
 
-  LOADED_ACTIVE_SUPPORT = false
+  begin
+    require "active_support"
+    loaded_active_support = true
+  rescue LoadError
+  end
+
+  loaded_active_support.freeze
+
+  LOADED_ACTIVE_SUPPORT = loaded_active_support
 
   def self.loaded_active_support?
     LOADED_ACTIVE_SUPPORT
   end
-end
-
-begin
-  require "active_support"
-  DoubleWriteCacheStores::LOADED_ACTIVE_SUPPORT = true
-rescue LoadError
 end
 
 require "double_write_cache_stores/version"
