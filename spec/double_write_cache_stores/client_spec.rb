@@ -37,30 +37,28 @@ describe DoubleWriteCacheStores::Client do
       after { cache_store.flush }
 
       it "returns value" do
-        expect(cache_store.fetch("key-a")).to eq "example-value-a"
-        expect(cache_store.fetch("key-nil")).to eq nil
+        expect(cache_store.fetch("key-a"){ "faild-value" }).to eq "example-value-a"
+        expect{ cache_store.fetch("error") }.to raise_error LocalJumpError
       end
 
       it "get value and set value, block in args" do
-        expect(cache_store.fetch("key-b")).to eq nil
-
         cache_store.fetch("key-b") do
           "block-value-b"
         end
 
-        expect(cache_store.fetch("key-b")).to eq "block-value-b"
+        expect(cache_store.fetch("key-b") { "faild-value" }).to eq "block-value-b"
         expect(cache_store.get("key-b")).to eq "block-value-b"
 
         result = cache_store.fetch("key-b") do
           "not-overwrite-value"
         end
-        expect(cache_store.fetch("key-b")).to eq "block-value-b"
+        expect(cache_store.fetch("key-b") { "faild-value" }).to eq "block-value-b"
         expect(cache_store.get("key-b")).to eq "block-value-b"
 
         cache_store.fetch("key-c", expires_in: 1) do
           "c-value"
         end
-        expect(cache_store.fetch("key-c")).to eq "c-value"
+        expect(cache_store.fetch("key-c") { "faild-value" }).to eq "c-value"
         sleep 2
         expect(cache_store.get("key-c")).to be_nil
       end
@@ -69,14 +67,14 @@ describe DoubleWriteCacheStores::Client do
         cached_value = cache_store.fetch("key-c") do
                          "block-value-c"
                        end
-        expect(cache_store.fetch("key-c")).to eq "block-value-c"
+        expect(cache_store.fetch("key-c") { "faild-value" }).to eq "block-value-c"
 
         new_value = cache_store.fetch("key-c", force: true) do
                          "block-value-c-force"
                        end
 
         expect(new_value).to eq "block-value-c-force"
-        expect(cache_store.fetch("key-c")).to eq "block-value-c-force"
+        expect(cache_store.fetch("key-c") { "faild-value" }).to eq "block-value-c-force"
       end
     end
 
