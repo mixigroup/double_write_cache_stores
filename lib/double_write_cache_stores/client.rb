@@ -102,6 +102,7 @@ class DoubleWriteCacheStores::Client
        (@write_only_store && @write_only_store.respond_to?(:fetch))
       if block_given?
         delete name if options[:force]
+
         result = if @read_and_write_store.is_a? Dalli::Client
                    ttl = options[:expires_in]
                    @read_and_write_store.fetch(name, ttl, options) { yield }
@@ -109,21 +110,12 @@ class DoubleWriteCacheStores::Client
                    @read_and_write_store.fetch(name, options) { yield }
                  end
 
-        if @write_only_store
-          if @write_only_store.is_a? Dalli::Client
-            ttl = options[:expires_in]
-            @write_only_store.fetch(name, ttl, options) { yield }
-          else
-            @write_only_store.fetch(name, options) { yield }
-          end
-        end
-
-        result
+        set_or_write_method_call @write_only_store, name, result, options if @write_only_store
       else
         result = @read_and_write_store.fetch(name, options)
-        @write_only_store.fetch(name, options) if @write_only_store
-        result
+        set_or_write_method_call @write_only_store, name, result, options if @write_only_store
       end
+      result
     else
       raise UnSupportException.new "Unsupported #fetch from client object."
     end
