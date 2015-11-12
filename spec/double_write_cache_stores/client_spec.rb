@@ -151,7 +151,7 @@ describe DoubleWriteCacheStores::Client do
 
       it "expired value, touched expired" do
         expect(cache_store.touch "touch-key", expire_ttl).to be true
-        sleep expire_ttl
+        sleep expire_ttl + 3
         expect(cache_store.read "touch-key").to eq nil
       end
 
