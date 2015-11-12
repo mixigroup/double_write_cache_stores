@@ -24,5 +24,4 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "dalli", "~> 2.7.4"
   spec.add_development_dependency "pry"
   spec.add_development_dependency "tilt", "1.3.7"
-  # spec.add_development_dependency "activesupport"
 end
