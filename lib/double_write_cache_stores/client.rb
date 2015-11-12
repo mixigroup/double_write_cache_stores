@@ -104,22 +104,8 @@ class DoubleWriteCacheStores::Client
       delete name if options[:force]
 
       if options[:race_condition_ttl]
-        result = if @read_and_write_store.is_a? Dalli::Client
-                   ttl = options[:expires_in]
-                   @read_and_write_store.fetch(name, ttl, options) { yield }
-                 else
-                   @read_and_write_store.fetch(name, options) { yield }
-                 end
-
-        if @write_only_store
-          if @write_only_store.is_a? Dalli::Client
-            ttl = options[:expires_in]
-            @write_only_store.fetch(name, ttl, options) { result }
-          else
-            @write_only_store.fetch(name, options) { result }
-          end
-        end
-
+        result = fetch_to_cache_store(@read_and_write_store, name, options) { yield }
+        fetch_to_cache_store(@write_only_store, name, options) { result } if @write_only_store
         result
       else
         unless value = get_or_read_method_call(name)
@@ -144,6 +130,15 @@ class DoubleWriteCacheStores::Client
   alias_method :decr, :decrement
 
   private
+
+    def fetch_to_cache_store(cache_store, key, options, &block)
+      if cache_store.is_a? Dalli::Client
+        ttl = options[:expires_in]
+        cache_store.fetch key, ttl, options { yield }
+      else
+        cache_store.fetch key, options { yield }
+      end
+    end
 
     def write_cache_store(key, value, options = nil)
       set_or_write_method_call @read_and_write_store, key, value, options
