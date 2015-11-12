@@ -113,28 +113,14 @@ describe DoubleWriteCacheStores::Client do
     describe '#delete' do
       before do
         cache_store.write "will-delete-key", "example-will-delete-value", expires_in: 86400
+        expect(cache_store.delete "will-delete-key").to be true
       end
 
       it "delete key-value" do
-        expect(cache_store.delete "will-delete-key").to be true
         expect(cache_store.read "will-delete-key").to be_nil
-
-        value = if cache_store.read_and_write_store.respond_to? :read
-                  cache_store.read_and_write_store.read "will-delete-key"
-                else
-                  cache_store.read_and_write_store.get "will-delete-key"
-                end
-        expect(value).to be_nil
-
-        if cache_store.write_only_store
-          value = if cache_store.write_only_store.respond_to? :read
-                    cache_store.write_only_store.read "will-delete-key"
-                  else
-                    cache_store.write_only_store.get "will-delete-key"
-                  end
-          expect(value).to be_nil
-        end
       end
+
+      it_behaves_like "Equal values", cache_store, "will-delete-key", nil
     end
 
     describe '#touch' do
@@ -176,26 +162,6 @@ describe DoubleWriteCacheStores::Client do
       end
 
       it_behaves_like "Equal values", cache_store, "key", "example-write-value"
-
-      it "writed to read_and_write_store" do
-        value = if cache_store.read_and_write_store.respond_to? :get
-                  cache_store.read_and_write_store.get "key"
-                else
-                  cache_store.read_and_write_store.read "key"
-                end
-        expect(value).to eq "example-write-value"
-      end
-
-      if cache_store.write_only_store
-        it "writed to write_only_store" do
-          value = if cache_store.write_only_store.respond_to? :get
-                    cache_store.write_only_store.get "key"
-                  else
-                    cache_store.write_only_store.read "key"
-                  end
-          expect(value).to eq "example-write-value"
-        end
-      end
     end
 
     describe '#read' do
