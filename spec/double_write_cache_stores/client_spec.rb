@@ -1,10 +1,42 @@
 require "spec_helper"
 
+def get_or_read(store, key)
+  if store.respond_to? :get
+    store.get key
+  else
+    store.read key
+  end
+end
+
 describe DoubleWriteCacheStores::Client do
   describe '#initialize' do
     let(:options) { { namespace: "app_v1", compress: true } }
     it "different cache store instance" do
       expect { DoubleWriteCacheStores::Client.new Dalli::Client.new("localhost:11211", options), "bad instance object" }.to raise_error RuntimeError
+    end
+  end
+
+  shared_examples "Equal values" do |cache_store, key, value|
+    let(:rw_store) { cache_store.read_and_write_store }
+    let(:rw_value) { get_or_read(rw_store, key) }
+
+    describe "Equal values" do
+
+      it "Read and Write cache store" do
+        expect(rw_value).to eq value
+      end
+
+      if w_store = cache_store.write_only_store
+        it "Write cache store" do
+          w_value = get_or_read(w_store, key)
+          expect(w_value).to eq value
+        end
+
+        it "RW == W cache store's values" do
+          w_value = get_or_read(w_store, key)
+          expect(rw_value).to eq w_value
+        end
+      end
     end
   end
 
@@ -139,6 +171,8 @@ describe DoubleWriteCacheStores::Client do
         expect(cache_store.read "key").to eq "example-write-value"
       end
 
+      it_behaves_like "Equal values", cache_store, "key", "example-write-value"
+
       it "writed to read_and_write_store" do
         value = if cache_store.read_and_write_store.respond_to? :get
                   cache_store.read_and_write_store.get "key"
@@ -177,29 +211,15 @@ describe DoubleWriteCacheStores::Client do
     describe '#flush' do
       before do
         cache_store.write "will-flush-key", "will-flush-value", expires_in: 86400
-      end
-
-      it "example" do
         expect(cache_store.read "will-flush-key").to eq "will-flush-value"
         expect(cache_store.flush).to eq true
-        expect(cache_store.read "will-flush-key").to eq nil
-
-        value = if cache_store.read_and_write_store.respond_to? :read
-                  cache_store.read_and_write_store.read "will-flush-key"
-                else
-                  cache_store.read_and_write_store.get "will-flush-key"
-                end
-        expect(value).to be_nil
-
-        if cache_store.write_only_store
-          value = if cache_store.write_only_store.respond_to? :read
-                    cache_store.write_only_store.read "will-flush-key"
-                  else
-                    cache_store.write_only_store.get "will-flush-key"
-                  end
-          expect(value).to be_nil
-        end
       end
+
+      it "retuns nil" do
+        expect(cache_store.read "will-flush-key").to eq nil
+      end
+
+      it_behaves_like "Equal values", cache_store, "will-flush-key", nil
     end
 
     shared_examples "read cache after increment or decrement example" do
@@ -220,6 +240,12 @@ describe DoubleWriteCacheStores::Client do
           before { cache_store.set(key, 0, raw: true) }
           context "when amount does not exist" do
             it { expect(cache_store.increment key).to eq 1 }
+
+            context "incremented value in cache stores" do
+              before { cache_store.increment key }
+              it_behaves_like("Equal values", cache_store, "key-increment", "1")
+            end
+
           end
           context "when amount exists" do
             it { expect(cache_store.increment key, 2).to eq 2 }
@@ -268,6 +294,12 @@ describe DoubleWriteCacheStores::Client do
           before { cache_store.set(key, 101, raw: true) }
           context "when amount does not exist" do
             it { expect(cache_store.decrement key).to eq 100 }
+
+            context "decremented value in cache stores" do
+              before { cache_store.decrement key }
+              it_behaves_like("Equal values", cache_store, "key-decrement", "100")
+            end
+
           end
           context "when amount exists" do
             it { expect(cache_store.decrement key, 2).to eq 99 }
@@ -308,6 +340,11 @@ describe DoubleWriteCacheStores::Client do
         cache_store["key"] = "example-value"
         expect(cache_store["key"]).to eq "example-value"
       end
+
+      context "seted value in cache stores" do
+        before { cache_store["key"] = "value" }
+        it_behaves_like("Equal values", cache_store, "key", "value")
+      end
     end
 
     describe "cas" do
@@ -320,6 +357,8 @@ describe DoubleWriteCacheStores::Client do
           expect(cache_store.get_cas("get-cas-key")[0]).to eq "get-cas-value"
           expect(cache_store.get_cas("get-cas-key")[1]).to be_kind_of(Integer)
         end
+
+        it_behaves_like("Equal values", cache_store, "get-cas-key", "get-cas-value")
       end
 
       describe '#set_cas' do
