@@ -71,7 +71,7 @@ describe DoubleWriteCacheStores::Client do
 
         new_value = cache_store.fetch("key-c", force: true) do
                          "block-value-c-force"
-                       end
+                    end
 
         expect(new_value).to eq "block-value-c-force"
         expect(cache_store.fetch("key-c") { "faild-value" }).to eq "block-value-c-force"
