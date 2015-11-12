@@ -17,8 +17,5 @@ addons:
     packages:
     - memcached
 
-before_install:
-  - sudo ntpdate -v ntp.nict.jp
-
 script:
   - bundle exec rake spec
