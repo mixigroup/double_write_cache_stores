@@ -172,7 +172,7 @@ class DoubleWriteCacheStores::Client
       elsif @read_and_write_store.respond_to? :read_multi
         @read_and_write_store.read_multi(*keys)
       else
-        raise UnSupportException.new "Unsupported multi keys get or read from client object."
+        raise UnSupportException "Unsupported multi keys get or read from client object."
       end
     end
 
