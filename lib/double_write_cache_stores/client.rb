@@ -88,24 +88,18 @@ class DoubleWriteCacheStores::Client
   end
 
   def fetch(name, options = {}, &_block)
-    if @read_and_write_store.respond_to?(:fetch) ||
-       (@write_only_store && @write_only_store.respond_to?(:fetch))
+    raise UnSupportException "Unsupported #fetch from client object." unless @read_and_write_store.respond_to?(:fetch)
 
-      delete name if options[:force]
+    delete name if options[:force]
 
-      if options[:race_condition_ttl]
-        result = fetch_to_cache_store(@read_and_write_store, name, options) { yield }
-        fetch_to_cache_store(@write_only_store, name, options) { result } if @write_only_store
-        result
-      else
-        unless value = get_or_read_method_call(name)
-          value = yield
-          write_cache_store name, value, options
-        end
-        value
-      end
+    if options[:race_condition_ttl]
+      fetch_race_condition name, options { yield }
     else
-      raise UnSupportException "Unsupported #fetch from client object."
+      unless value = get_or_read_method_call(name)
+        value = yield
+        write_cache_store name, value, options
+      end
+      value
     end
   end
 
@@ -120,6 +114,12 @@ class DoubleWriteCacheStores::Client
   alias_method :decr, :decrement
 
   private
+
+    def fetch_race_condition(key, options, &_block)
+      result = fetch_to_cache_store(@read_and_write_store, key, options) { yield }
+      fetch_to_cache_store(@write_only_store, key, options) { result } if @write_only_store && @write_only_store.respond_to?(:fetch)
+      result
+    end
 
     def fetch_to_cache_store(cache_store, key, options, &_block)
       if cache_store.is_a? Dalli::Client
@@ -137,12 +137,8 @@ class DoubleWriteCacheStores::Client
 
     def set_or_write_method_call(cache_store, key, value, options)
       if cache_store.respond_to? :set
-        if defined?(Dalli) && cache_store.is_a?(Dalli::Client)
-          ttl = options[:expires_in] if options
-          cache_store.set key, value, ttl, options
-        else
-          cache_store.set key, value, options
-        end
+        ttl = options[:expires_in] if options
+        cache_store.set key, value, ttl, options
       elsif cache_store.respond_to? :write
         cache_store.write key, value, options
       end
@@ -190,7 +186,7 @@ class DoubleWriteCacheStores::Client
     end
 
     def decr_or_decrement_method_call(cache_store, key, amount, options)
-      if defined?(Dalli) && cache_store.is_a?(Dalli::Client)
+      if cache_store.is_a?(Dalli::Client)
         ttl = options[:expires_in] if options
         default = options.key?(:initial) ? options[:initial] : 0
         cache_store.decr key, amount, ttl, default
