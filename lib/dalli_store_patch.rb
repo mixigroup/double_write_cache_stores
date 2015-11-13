@@ -1,7 +1,6 @@
 # monky patch
 # support cas interface for ActiveSupport::Cache::DalliStore
 module DalliStorePatch
-
   def touch(key, ttl = nil)
     ttl ||= options[:expires_in].to_i
     @data.touch key, ttl
