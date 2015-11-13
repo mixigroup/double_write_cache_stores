@@ -95,9 +95,10 @@ describe DoubleWriteCacheStores::Client do
       end
 
       it "Support force read option, convertible Rails.cache" do
-        cached_value = cache_store.fetch("key-c") do
-                         "block-value-c"
-                       end
+        cache_store.fetch("key-c") do
+          "block-value-c"
+        end
+
         expect(cache_store.fetch("key-c") { "faild-value" }).to eq "block-value-c"
 
         new_value = cache_store.fetch("key-c", force: true) do
