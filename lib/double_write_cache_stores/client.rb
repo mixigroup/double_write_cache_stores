@@ -1,5 +1,5 @@
 module DoubleWriteCacheStores
-  class Client
+  class Client # rubocop:disable Metrics/ClassLength
     attr_accessor :read_and_write_store, :write_only_store
 
     def initialize(read_and_write_store_servers, write_only_store_servers = nil)
@@ -14,14 +14,6 @@ module DoubleWriteCacheStores
 
     def [](key)
       get key
-    end
-
-    def get(key)
-      get_or_read_method_call key
-    end
-
-    def get_multi(*keys)
-      get_multi_or_read_multi_method_call(*keys)
     end
 
     def get_cas(key)
@@ -48,14 +40,6 @@ module DoubleWriteCacheStores
       cas_unique
     end
 
-    def read(key)
-      get_or_read_method_call key
-    end
-
-    def read_multi(*keys)
-      get_multi_or_read_multi_method_call(*keys)
-    end
-
     def delete(key)
       result = @read_and_write_store.delete key
       @write_only_store.delete key if @write_only_store
@@ -64,14 +48,6 @@ module DoubleWriteCacheStores
 
     def []=(key, value)
       set key, value
-    end
-
-    def set(key, value, options = nil)
-      write_cache_store key, value, options
-    end
-
-    def write(key, value, options = nil)
-      write_cache_store key, value, options
     end
 
     def touch(key, ttl = nil)
@@ -114,6 +90,35 @@ module DoubleWriteCacheStores
     end
     alias_method :decr, :decrement
 
+    def write_cache_store(key, value, options = nil)
+      set_or_write_method_call @read_and_write_store, key, value, options
+      set_or_write_method_call @write_only_store, key, value, options if @write_only_store
+    end
+    alias_method :set, :write_cache_store
+    alias_method :write, :write_cache_store
+
+    def get_or_read_method_call(key)
+      if @read_and_write_store.respond_to? :get
+        @read_and_write_store.get key
+      elsif @read_and_write_store.respond_to? :read
+        @read_and_write_store.read key
+      end
+    end
+    alias_method :get, :get_or_read_method_call
+    alias_method :read, :get_or_read_method_call
+
+    def get_multi_or_read_multi_method_call(*keys)
+      if @read_and_write_store.respond_to? :get_multi
+        @read_and_write_store.get_multi(*keys)
+      elsif @read_and_write_store.respond_to? :read_multi
+        @read_and_write_store.read_multi(*keys)
+      else
+        raise UnSupportException "Unsupported multi keys get or read from client object."
+      end
+    end
+    alias_method :get_multi, :get_multi_or_read_multi_method_call
+    alias_method :read_multi, :get_multi_or_read_multi_method_call
+
     private
 
       def fetch_race_condition(key, options, &_block)
@@ -131,35 +136,12 @@ module DoubleWriteCacheStores
         end
       end
 
-      def write_cache_store(key, value, options = nil)
-        set_or_write_method_call @read_and_write_store, key, value, options
-        set_or_write_method_call @write_only_store, key, value, options if @write_only_store
-      end
-
       def set_or_write_method_call(cache_store, key, value, options)
         if cache_store.respond_to? :set
           ttl = options[:expires_in] if options
           cache_store.set key, value, ttl, options
         elsif cache_store.respond_to? :write
           cache_store.write key, value, options
-        end
-      end
-
-      def get_or_read_method_call(key)
-        if @read_and_write_store.respond_to? :get
-          @read_and_write_store.get key
-        elsif @read_and_write_store.respond_to? :read
-          @read_and_write_store.read key
-        end
-      end
-
-      def get_multi_or_read_multi_method_call(*keys)
-        if @read_and_write_store.respond_to? :get_multi
-          @read_and_write_store.get_multi(*keys)
-        elsif @read_and_write_store.respond_to? :read_multi
-          @read_and_write_store.read_multi(*keys)
-        else
-          raise UnSupportException "Unsupported multi keys get or read from client object."
         end
       end
 
