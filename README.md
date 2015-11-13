@@ -1,17 +1,14 @@
 # DoubleWriteCacheStores
 
+[![Build Status](https://travis-ci.org/hirocaster/double_write_cache_stores.svg?branch=master)](https://travis-ci.org/hirocaster/double_write_cache_stores)
+
 pre-warming(double write to cach store and other cache store) cache store wrapper. will switch cache store.
-
-## Convertible interface, get/set by cache store
-
-- Padrino::Cache(moneta)
-- ActiveSupport::Cache::DalliStore(Dalli)
-- Padrino::Cache::Store::Memcache
 
 ## Support backend cache store
 
-- ActiveSupport::Cache::DalliStore(Dalli)
-- Padrino::Cache::Store::Memcache
+- ActiveSupport::Cache::MemCacheStore
+- ActiveSupport::Cache::DalliStore in Dalli
+- Dalli::Client
 
 ## Installation
 
@@ -44,10 +41,14 @@ set :cache, DoubleWriteCacheStores::Client.new(read_and_write_cache_store, write
 `config/application.rb`
 
 ```ruby
-read_and_write_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, 'localhost:11211'
-write_only_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, 'localhost:21211'
+options = { expires_in: 1.week, compress: true }
 
-config.cache_store = DoubleWriteCacheStores::Client.new(read_and_write_cache_store, write_only_cache_store)
+read_and_write_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, 'localhost:11211', options
+config.middleware.insert_before "Rack::Runtime", read_and_write_cache_store.middleware
+
+write_only_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, 'localhost:21211', options
+
+config.cache_store = DoubleWriteCacheStores::Client.new read_and_write_cache_store, write_only_cache_store
 ```
 
 #### in application

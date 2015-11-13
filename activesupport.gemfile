@@ -1,0 +1,7 @@
+source "https://rubygems.org"
+
+gem "rack"
+gem "activesupport"
+
+# Specify your gem's dependencies in active_record_sharding.gemspec
+gemspec
