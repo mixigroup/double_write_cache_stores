@@ -29,6 +29,7 @@ Or install it yourself as:
 ### Padrino
 
 `config/apps.rb`
+
 ````
 read_and_write_cache_store = ActiveSupport::Cache.lookup_store :dalli_store, 'localhost:11211'
 write_only_cache_store = ActiveSupport::Cache.lookup_store :dalli_store, 'localhost:21211'
@@ -43,10 +44,10 @@ set :cache, DoubleWriteCacheStores::Client.new(read_and_write_cache_store, write
 ```ruby
 options = { expires_in: 1.week, compress: true }
 
-read_and_write_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, 'localhost:11211', options
+read_and_write_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, "localhost:11211", options
 config.middleware.insert_before "Rack::Runtime", read_and_write_cache_store.middleware
 
-write_only_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, 'localhost:21211', options
+write_only_cache_store = ActiveSupport::Cache.lookup_store :mem_cache_store, "localhost:21211", options
 
 config.cache_store = DoubleWriteCacheStores::Client.new read_and_write_cache_store, write_only_cache_store
 ```
