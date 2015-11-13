@@ -1,6 +1,12 @@
 # monky patch
 # support cas interface for ActiveSupport::Cache::DalliStore
 module DalliStorePatch
+
+  def touch(key, ttl = nil)
+    ttl ||= options[:expires_in].to_i
+    @data.touch key, ttl
+  end
+
   def read_cas(name, options = {})
     name = namespaced_key(name, options)
 
