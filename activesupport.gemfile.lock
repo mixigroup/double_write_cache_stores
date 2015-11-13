@@ -2,6 +2,7 @@ PATH
   remote: .
   specs:
     double_write_cache_stores (0.3.0)
+      dalli (~> 2.7.4)
 
 GEM
   remote: https://rubygems.org/
@@ -50,7 +51,6 @@ PLATFORMS
 DEPENDENCIES
   activesupport
   bundler (~> 1.5)
-  dalli (~> 2.7.4)
   double_write_cache_stores!
   pry
   rack

@@ -4,7 +4,7 @@ module DoubleWriteCacheStores
   begin
     require "active_support"
     loaded_active_support = true
-  rescue LoadError
+  rescue LoadError # rubocop:disable Lint/HandleExceptions
   end
 
   loaded_active_support.freeze
@@ -23,6 +23,4 @@ require "double_write_cache_stores/base_exception"
 require "dalli"
 require "dalli_store_patch"
 
-if DoubleWriteCacheStores.loaded_active_support?
-  require "mem_cache_store_patch"
-end
+require "mem_cache_store_patch" if DoubleWriteCacheStores.loaded_active_support?

@@ -1,8 +1,12 @@
 # monky patch
 # support cas interface for ActiveSupport::Cache::DalliStore
 module DalliStorePatch
-  def read_cas(name, options = nil)
-    options ||= {}
+  def touch(key, ttl = nil)
+    ttl ||= options[:expires_in].to_i
+    @data.touch key, ttl
+  end
+
+  def read_cas(name, options = {})
     name = namespaced_key(name, options)
 
     instrument(:get_cas, name) do |_payload|
@@ -14,8 +18,7 @@ module DalliStorePatch
     false
   end
 
-  def write_cas(name, value, options = nil)
-    options ||= {}
+  def write_cas(name, value, options = {})
     name = namespaced_key(name, options)
     expires_in = options[:expires_in]
 
@@ -35,5 +38,5 @@ begin
   require "active_support/cache/dalli_store"
 
   ActiveSupport::Cache::DalliStore.send(:include, DalliStorePatch)
-rescue => exception
+rescue LoadError # rubocop:disable Lint/HandleExceptions
 end
