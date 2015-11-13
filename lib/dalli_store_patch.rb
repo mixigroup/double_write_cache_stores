@@ -35,5 +35,5 @@ begin
   require "active_support/cache/dalli_store"
 
   ActiveSupport::Cache::DalliStore.send(:include, DalliStorePatch)
-rescue => exception
+rescue LoadError # rubocop:disable Lint/HandleExceptions
 end
