@@ -1,4 +1,6 @@
 class DoubleWriteCacheStores::Client
+  attr_accessor :read_and_write_store, :write_only_store
+
   def initialize(read_and_write_store_servers, write_only_store_servers = nil)
     @read_and_write_store = read_and_write_store_servers
     if write_only_store_servers
@@ -54,8 +56,9 @@ class DoubleWriteCacheStores::Client
   end
 
   def delete(key)
-    @read_and_write_store.delete key
+    result = @read_and_write_store.delete key
     @write_only_store.delete key if @write_only_store
+    result
   end
 
   def []=(key, value)
@@ -72,7 +75,9 @@ class DoubleWriteCacheStores::Client
 
   def touch(key, ttl = nil)
     result = false
-    if defined?(Dalli) && @read_and_write_store.is_a?(Dalli::Client)
+    if defined?(Dalli) &&
+       (@read_and_write_store.is_a?(Dalli::Client) ||
+        @read_and_write_store.is_a?(ActiveSupport::Cache::MemCacheStore))
       result = @read_and_write_store.touch key, ttl
     else
       read_and_write_backend = @read_and_write_store.instance_variable_get("@backend") || @read_and_write_store.instance_variable_get("@data")
@@ -92,32 +97,22 @@ class DoubleWriteCacheStores::Client
     end
   end
 
-  def fetch(name, options = {})
+  def fetch(name, options = {}, &block)
     if @read_and_write_store.respond_to?(:fetch) ||
        (@write_only_store && @write_only_store.respond_to?(:fetch))
-      if block_given?
-        delete name if options[:force]
-        result = if @read_and_write_store.is_a? Dalli::Client
-                   ttl = options[:expires_in]
-                   @read_and_write_store.fetch(name, ttl, options) { yield }
-                 else
-                   @read_and_write_store.fetch(name, options) { yield }
-                 end
 
-        if @write_only_store
-          if @write_only_store.is_a? Dalli::Client
-            ttl = options[:expires_in]
-            @write_only_store.fetch(name, ttl, options) { yield }
-          else
-            @write_only_store.fetch(name, options) { yield }
-          end
-        end
+      delete name if options[:force]
 
+      if options[:race_condition_ttl]
+        result = fetch_to_cache_store(@read_and_write_store, name, options) { yield }
+        fetch_to_cache_store(@write_only_store, name, options) { result } if @write_only_store
         result
       else
-        result = @read_and_write_store.fetch(name, options)
-        @write_only_store.fetch(name, options) if @write_only_store
-        result
+        unless value = get_or_read_method_call(name)
+          value = yield
+          write_cache_store name, value, options
+        end
+        value
       end
     else
       raise UnSupportException.new "Unsupported #fetch from client object."
@@ -135,6 +130,15 @@ class DoubleWriteCacheStores::Client
   alias_method :decr, :decrement
 
   private
+
+    def fetch_to_cache_store(cache_store, key, options, &block)
+      if cache_store.is_a? Dalli::Client
+        ttl = options[:expires_in]
+        cache_store.fetch key, ttl, options { yield }
+      else
+        cache_store.fetch key, options { yield }
+      end
+    end
 
     def write_cache_store(key, value, options = nil)
       set_or_write_method_call @read_and_write_store, key, value, options
@@ -185,9 +189,9 @@ class DoubleWriteCacheStores::Client
     end
 
     def incr_or_increment_method_call(cache_store, key, amount, options)
-      if defined?(Dalli) && cache_store.is_a?(Dalli::Client)
-        ttl = options[:expires_in] if options
-        default = options.key?(:initial) ? options[:initial] : amount
+      ttl = options[:expires_in] if options
+      default = options.key?(:initial) ? options[:initial] : amount
+      if cache_store.is_a? Dalli::Client
         cache_store.incr key, amount, ttl, default
       elsif cache_store.respond_to? :increment
         options[:initial] = amount unless options.key?(:initial)
@@ -219,7 +223,9 @@ class DoubleWriteCacheStores::Client
 
     def write_only_store_touch(key, ttl)
       if @write_only_store
-        if defined?(Dalli) && @write_only_store.is_a?(Dalli::Client)
+        if defined?(Dalli) &&
+           (@read_and_write_store.is_a?(Dalli::Client) ||
+            @read_and_write_store.is_a?(ActiveSupport::Cache::MemCacheStore))
           @write_only_store.touch key, ttl
         else
           write_only_backend = @write_only_store.instance_variable_get("@backend") || @write_only_store.instance_variable_get("@data")
