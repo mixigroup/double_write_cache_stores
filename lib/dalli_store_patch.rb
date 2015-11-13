@@ -1,8 +1,7 @@
 # monky patch
 # support cas interface for ActiveSupport::Cache::DalliStore
 module DalliStorePatch
-  def read_cas(name, options = nil)
-    options ||= {}
+  def read_cas(name, options = {})
     name = namespaced_key(name, options)
 
     instrument(:get_cas, name) do |_payload|
@@ -14,8 +13,7 @@ module DalliStorePatch
     false
   end
 
-  def write_cas(name, value, options = nil)
-    options ||= {}
+  def write_cas(name, value, options = {})
     name = namespaced_key(name, options)
     expires_in = options[:expires_in]
 
