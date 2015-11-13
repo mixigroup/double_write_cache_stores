@@ -97,7 +97,7 @@ class DoubleWriteCacheStores::Client
     end
   end
 
-  def fetch(name, options = {}, &block)
+  def fetch(name, options = {}, &_block)
     if @read_and_write_store.respond_to?(:fetch) ||
        (@write_only_store && @write_only_store.respond_to?(:fetch))
 
@@ -131,7 +131,7 @@ class DoubleWriteCacheStores::Client
 
   private
 
-    def fetch_to_cache_store(cache_store, key, options, &block)
+    def fetch_to_cache_store(cache_store, key, options, &_block)
       if cache_store.is_a? Dalli::Client
         ttl = options[:expires_in]
         cache_store.fetch key, ttl, options { yield }

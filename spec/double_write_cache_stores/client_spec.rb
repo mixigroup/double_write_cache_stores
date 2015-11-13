@@ -21,7 +21,6 @@ describe DoubleWriteCacheStores::Client do
     let(:rw_value) { get_or_read(rw_store, key) }
 
     describe "Equal values" do
-
       it "Read and Write cache store" do
         expect(rw_value).to eq value
       end
@@ -69,8 +68,8 @@ describe DoubleWriteCacheStores::Client do
       after { cache_store.flush }
 
       it "returns value" do
-        expect(cache_store.fetch("key-a"){ "faild-value" }).to eq "example-value-a"
-        expect{ cache_store.fetch("error") }.to raise_error LocalJumpError
+        expect(cache_store.fetch("key-a") { "faild-value" }).to eq "example-value-a"
+        expect { cache_store.fetch("error") }.to raise_error LocalJumpError
       end
 
       it "get value and set value, block in args" do
@@ -102,7 +101,7 @@ describe DoubleWriteCacheStores::Client do
         expect(cache_store.fetch("key-c") { "faild-value" }).to eq "block-value-c"
 
         new_value = cache_store.fetch("key-c", force: true) do
-                         "block-value-c-force"
+                      "block-value-c-force"
                     end
 
         expect(new_value).to eq "block-value-c-force"
@@ -215,7 +214,6 @@ describe DoubleWriteCacheStores::Client do
               before { cache_store.increment key }
               it_behaves_like("Equal values", cache_store, "key-increment", "1")
             end
-
           end
           context "when amount exists" do
             it { expect(cache_store.increment key, 2).to eq 2 }
@@ -269,7 +267,6 @@ describe DoubleWriteCacheStores::Client do
               before { cache_store.decrement key }
               it_behaves_like("Equal values", cache_store, "key-decrement", "100")
             end
-
           end
           context "when amount exists" do
             it { expect(cache_store.decrement key, 2).to eq 99 }
@@ -351,7 +348,6 @@ describe DoubleWriteCacheStores::Client do
   describe "shard example" do
     if DoubleWriteCacheStores.loaded_active_support?
       context "ActiveSupport MemCacheStore" do
-
         options = { raw: true, expires_in: 3600 }
 
         read_and_write_store = ActiveSupport::Cache.lookup_store :mem_cache_store, "localhost:11211", options
