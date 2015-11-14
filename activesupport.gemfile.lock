@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    double_write_cache_stores (0.3.0)
+    double_write_cache_stores (0.4.0)
       dalli (~> 2.7.4)
 
 GEM
