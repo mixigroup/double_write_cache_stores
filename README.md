@@ -1,6 +1,6 @@
 # DoubleWriteCacheStores
 
-[![Build Status](https://travis-ci.org/hirocaster/double_write_cache_stores.svg?branch=master)](https://travis-ci.org/hirocaster/double_write_cache_stores)
+[![Build Status](https://travis-ci.org/hirocaster/double_write_cache_stores.svg?branch=master)](https://travis-ci.org/hirocaster/double_write_cache_stores) [![Code Climate](https://codeclimate.com/github/hirocaster/double_write_cache_stores/badges/gpa.svg)](https://codeclimate.com/github/hirocaster/double_write_cache_stores)
 
 pre-warming(double write to cach store and other cache store) cache store wrapper. will switch cache store.
 
