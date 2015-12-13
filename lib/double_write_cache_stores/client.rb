@@ -21,6 +21,8 @@ module DoubleWriteCacheStores
         @read_and_write_store.get_cas key
       elsif @read_and_write_store.respond_to? :read_cas
         @read_and_write_store.read_cas key
+      elsif @read_and_write_store.respond_to? :dalli
+        @read_and_write_store.dalli.get_cas key
       end
     end
 
@@ -31,6 +33,8 @@ module DoubleWriteCacheStores
                      options ||= {}
                      options[:cas] = cas
                      @read_and_write_store.write_cas key, value, options
+                   elsif @read_and_write_store.respond_to? :dalli
+                     @read_and_write_store.dalli.set_cas key, value, cas, options
                    end
 
       if @write_only_store && cas_unique
@@ -51,8 +55,20 @@ module DoubleWriteCacheStores
     end
 
     def touch(key, ttl = nil)
-      result = @read_and_write_store.touch key, ttl
-      @write_only_store.touch key, ttl if @write_only_store
+      result = if @read_and_write_store.respond_to? :touch
+                 @read_and_write_store.touch key, ttl
+               elsif @read_and_write_store.respond_to? :dalli
+                 @read_and_write_store.dalli.touch key, ttl
+               end
+
+      if @write_only_store
+        if @write_only_store.respond_to? :touch
+          @write_only_store.touch key, ttl
+        elsif @write_only_store.respond_to? :dalli
+          @write_only_store.dalli.touch key, ttl
+        end
+      end
+
       result
     end
 
