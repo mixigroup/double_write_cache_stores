@@ -21,6 +21,5 @@ require "double_write_cache_stores/client"
 require "double_write_cache_stores/base_exception"
 
 require "dalli"
-require "dalli_store_patch"
 
 require "mem_cache_store_patch" if DoubleWriteCacheStores.loaded_active_support?
