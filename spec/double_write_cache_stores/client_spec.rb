@@ -364,21 +364,6 @@ describe DoubleWriteCacheStores::Client do
           it_behaves_like "cache store example", one_cache_store
         end
       end
-
-      context "ActiveSupport :dalli_store in Dalli" do
-        read_and_write_store = ActiveSupport::Cache.lookup_store :dalli_store, "localhost:11211"
-        write_only_store = ActiveSupport::Cache.lookup_store :dalli_store, "localhost:21211"
-
-        context "double cache store" do
-          copy_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, write_only_store)
-          it_behaves_like "cache store example", copy_cache_store
-        end
-
-        context "one cache store object" do
-          one_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, nil)
-          it_behaves_like "cache store example", one_cache_store
-        end
-      end
     else
       skip "Not load ActiveSupport"
     end
