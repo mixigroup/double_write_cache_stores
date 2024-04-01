@@ -60,6 +60,14 @@ Rails.cache.fetch("key") do
 end
 ```
 
+## Run tests locally
+
+```
+docker compose up -d
+bundle install
+bundle exec rake spec
+```
+
 ## Contributing
 
 1. Fork it ( http://github.com/hirocaster/double_write_cache_stores/fork )
