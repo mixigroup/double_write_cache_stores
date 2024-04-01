@@ -29,6 +29,8 @@ jobs:
         image: memcached
         ports:
           - 21211:11211
+    env:
+      BUNDLE_GEMFILE: ${{ matrix.gemfile }}
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
@@ -38,5 +40,3 @@ jobs:
           bundler-cache: true
       - run: bundle install
       - run: bundle exec rake spec
-        env:
-          BUNDLE_GEMFILE: ${{ matrix.gemfile }}
