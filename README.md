@@ -1,6 +1,6 @@
 # DoubleWriteCacheStores
 
-[![test](https://github.com/hirocaster/double_write_cache_stores/actions/workflows/test.yml/badge.svg)](https://github.com/hirocaster/double_write_cache_stores/actions/workflows/test.yml)
+[![test](https://github.com/mixigroup/double_write_cache_stores/actions/workflows/test.yml/badge.svg)](https://github.com/mixigroup/double_write_cache_stores/actions/workflows/test.yml)
 
 pre-warming(double write to cach store and other cache store) cache store wrapper. will switch cache store.
 
@@ -71,7 +71,7 @@ bundle exec appraisal activesupport_5_2 rake spec
 
 ## Contributing
 
-1. Fork it ( http://github.com/hirocaster/double_write_cache_stores/fork )
+1. Fork it ( http://github.com/mixigroup/double_write_cache_stores/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
