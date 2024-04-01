@@ -4,13 +4,10 @@ cache:
   directories:
   - vendor/bundle
 rvm:
-  - 2.2.3
-  - 2.1.7
-  - 2.0.0-p647
+  - 2.3.8
 
 gemfile:
-  - Gemfile
-  - activesupport.gemfile
+  - gemfiles/activesupport_5_2.gemfile
 
 addons:
   apt:
