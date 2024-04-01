@@ -16,6 +16,10 @@ jobs:
       matrix:
         ruby:
           - "2.3.8"
+          - "2.4.10"
+          - "2.5.9"
+          - "2.6.10"
+          - "2.7.8"
         gemfile:
           - gemfiles/activesupport_5_2.gemfile
     services:
