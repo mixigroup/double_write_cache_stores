@@ -15,19 +15,26 @@ jobs:
       fail-fast: false
       matrix:
         ruby:
-          - "2.5.9"
-          - "2.6.10"
-          - "2.7.8"
-          - "3.0.6"
-          - "3.1.4"
+          - "2.5"
+          - "2.6"
+          - "2.7"
+          - "3.0"
+          - "3.1"
         gemfile:
           - gemfiles/activesupport_5_2.gemfile
           - gemfiles/activesupport_6_0.gemfile
           - gemfiles/activesupport_6_1.gemfile
+          - gemfiles/activesupport_7_0.gemfile
         exclude:
-          - ruby: "3.0.6"
+          - ruby: "2.5"
+            gemfile: gemfiles/activesupport_7_0.gemfile
+          - ruby: "2.6"
+            gemfile: gemfiles/activesupport_7_0.gemfile
+          - ruby: "3.0"
             gemfile: gemfiles/activesupport_5_2.gemfile
-          - ruby: "3.1.4"
+          - ruby: "3.0"
+            gemfile: gemfiles/activesupport_5_2.gemfile
+          - ruby: "3.1"
             gemfile: gemfiles/activesupport_5_2.gemfile
     services:
       memcached_11211:
