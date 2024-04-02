@@ -26,6 +26,7 @@ jobs:
           - gemfiles/activesupport_6_0.gemfile
           - gemfiles/activesupport_6_1.gemfile
           - gemfiles/activesupport_7_0.gemfile
+          - gemfiles/without_activesupport.gemfile
         exclude:
           - ruby: "2.5"
             gemfile: gemfiles/activesupport_7_0.gemfile
