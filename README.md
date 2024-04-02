@@ -66,7 +66,8 @@ end
 docker compose up -d
 bundle install
 bundle exec appraisal install
-bundle exec appraisal activesupport_5_2 rake spec
+#bundle exec appraisal activesupport_5_2 rake spec
+bundle exec appraisal activesupport_6_0 rake spec
 ```
 
 ## Contributing
