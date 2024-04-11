@@ -7,7 +7,6 @@ pre-warming(double write to cach store and other cache store) cache store wrappe
 ## Support backend cache store
 
 - ActiveSupport::Cache::MemCacheStore
-- ActiveSupport::Cache::DalliStore in Dalli
 - Dalli::Client
 
 ## Installation
