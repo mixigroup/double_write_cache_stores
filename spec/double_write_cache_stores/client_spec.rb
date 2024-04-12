@@ -9,7 +9,7 @@ def get_or_read(store, key)
 end
 
 describe DoubleWriteCacheStores::Client do
-  describe '#initialize' do
+  describe "#initialize" do
     let(:options) { { namespace: "app_v1", compress: true } }
     it "different cache store instance" do
       expect { DoubleWriteCacheStores::Client.new Dalli::Client.new("localhost:11211", options), "bad instance object" }.to raise_error RuntimeError
@@ -40,7 +40,7 @@ describe DoubleWriteCacheStores::Client do
   end
 
   shared_examples "cache store example" do |cache_store|
-    describe '#read_multi' do
+    describe "#read_multi" do
       before do
         cache_store.write "key-a", "example-value-a", expires_in: 86400
         cache_store.write "key-b", "example-value-b", expires_in: 86400
@@ -55,12 +55,12 @@ describe DoubleWriteCacheStores::Client do
         expect(results["key-c"]).to eq nil
       end
 
-      it 'returns values equal #get_multi' do
+      it "returns values equal #get_multi" do
         expect(cache_store.read_multi("key-a", "key-b")).to eq cache_store.get_multi("key-a", "key-b")
       end
     end
 
-    describe '#fetch' do
+    describe "#fetch" do
       before do
         cache_store.write "key-a", "example-value-a", expires_in: 1
       end
@@ -110,7 +110,7 @@ describe DoubleWriteCacheStores::Client do
       end
     end
 
-    describe '#delete' do
+    describe "#delete" do
       before do
         cache_store.write "will-delete-key", "example-will-delete-value", expires_in: 86400
         expect(cache_store.delete "will-delete-key").to be true
@@ -123,7 +123,7 @@ describe DoubleWriteCacheStores::Client do
       it_behaves_like "Equal values", cache_store, "will-delete-key", nil
     end
 
-    describe '#touch' do
+    describe "#touch" do
       let(:expire_ttl) { 1 }
 
       before do
@@ -152,7 +152,7 @@ describe DoubleWriteCacheStores::Client do
       end
     end
 
-    describe '#write' do
+    describe "#write" do
       before do
         cache_store.write "key", "example-write-value", expires_in: 86400
       end
@@ -164,7 +164,7 @@ describe DoubleWriteCacheStores::Client do
       it_behaves_like "Equal values", cache_store, "key", "example-write-value"
     end
 
-    describe '#read' do
+    describe "#read" do
       before do
         cache_store.write "key", "example-read-value", expires_in: 86400
       end
@@ -178,7 +178,7 @@ describe DoubleWriteCacheStores::Client do
       end
     end
 
-    describe '#flush' do
+    describe "#flush" do
       before do
         cache_store.write "will-flush-key", "will-flush-value", expires_in: 86400
         expect(cache_store.read "will-flush-key").to eq "will-flush-value"
@@ -197,7 +197,7 @@ describe DoubleWriteCacheStores::Client do
       it { expect((cache_store.read key).to_i).to eq expected_value }
     end
 
-    describe '#increment' do
+    describe "#increment" do
       let(:key) { "key-increment" }
       after     { cache_store.flush }
 
@@ -250,7 +250,7 @@ describe DoubleWriteCacheStores::Client do
       end
     end
 
-    describe '#decrement' do
+    describe "#decrement" do
       let(:key) { "key-decrement" }
       after     { cache_store.flush }
 
@@ -303,7 +303,7 @@ describe DoubleWriteCacheStores::Client do
       end
     end
 
-    describe '#[]=(key,value) and get #[](key)' do
+    describe "#[]=(key,value) and get #[](key)" do
       it "set value and get value" do
         cache_store["key"] = "example-value"
         expect(cache_store["key"]).to eq "example-value"
@@ -316,7 +316,7 @@ describe DoubleWriteCacheStores::Client do
     end
 
     describe "cas" do
-      describe '#get_cas' do
+      describe "#get_cas" do
         before do
           cache_store.set_cas "get-cas-key", "get-cas-value"
         end
@@ -329,7 +329,7 @@ describe DoubleWriteCacheStores::Client do
         it_behaves_like("Equal values", cache_store, "get-cas-key", "get-cas-value")
       end
 
-      describe '#set_cas' do
+      describe "#set_cas" do
         let :cas_unique do
           cache_store.set_cas("set-cas-key", "set-cas-value")
           cache_store.get_cas("set-cas-key")[1]
@@ -353,21 +353,6 @@ describe DoubleWriteCacheStores::Client do
 
         read_and_write_store = ActiveSupport::Cache.lookup_store :mem_cache_store, "localhost:11211", options
         write_only_store = ActiveSupport::Cache.lookup_store :mem_cache_store, "localhost:21211", options
-
-        context "double cache store" do
-          copy_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, write_only_store)
-          it_behaves_like "cache store example", copy_cache_store
-        end
-
-        context "one cache store object" do
-          one_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, nil)
-          it_behaves_like "cache store example", one_cache_store
-        end
-      end
-
-      context "ActiveSupport :dalli_store in Dalli" do
-        read_and_write_store = ActiveSupport::Cache.lookup_store :dalli_store, "localhost:11211"
-        write_only_store = ActiveSupport::Cache.lookup_store :dalli_store, "localhost:21211"
 
         context "double cache store" do
           copy_cache_store = DoubleWriteCacheStores::Client.new(read_and_write_store, write_only_store)

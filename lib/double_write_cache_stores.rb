@@ -4,7 +4,7 @@ module DoubleWriteCacheStores
   begin
     require "active_support"
     loaded_active_support = true
-  rescue LoadError # rubocop:disable Lint/HandleExceptions
+  rescue LoadError # rubocop:disable Lint/SuppressedException
   end
 
   loaded_active_support.freeze

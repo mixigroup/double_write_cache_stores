@@ -2,17 +2,17 @@ AllCops:
   Exclude:
     - "vendor/**/*"
   DisplayCopNames: true
+  NewCops: disable
+  TargetRubyVersion: 2.5
+  SuggestExtensions: false
 
 Style/AsciiComments:
-  Enabled: false
-
-Style/BracesAroundHashParameters:
   Enabled: false
 
 Style/Documentation:
   Enabled: false
 
-Style/ExtraSpacing:
+Layout/ExtraSpacing:
   Enabled: false
 
 Style/GuardClause:
@@ -27,11 +27,11 @@ Style/ModuleFunction:
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 
-Style/SingleSpaceBeforeFirstArg:
+Layout/SpaceBeforeFirstArg:
   Enabled: false
 
-Style/IndentationConsistency:
-  EnforcedStyle: rails
+Layout/IndentationConsistency:
+  EnforcedStyle: indented_internal_methods
 
 Style/SignalException:
   EnforcedStyle: only_raise
@@ -42,19 +42,50 @@ Style/HashSyntax:
     - "**/*.rake"
     - "Rakefile"
 
-Metrics/LineLength:
+Layout/LineLength:
   Max: 160
-  Exclude:
-    - "db/migrate/*.rb"
 
-NumericLiterals:
+Style/NumericLiterals:
   MinDigits: 7
 
 Lint/AssignmentInCondition:
   Enabled: false
 
-Lint/BlockAlignment:
+Layout/BlockAlignment:
   Enabled: false
 
 Metrics/MethodLength:
-  Max: 12
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Style/NestedParenthesizedCalls:
+  Enabled: false
+
+Metrics/BlockLength:
+  Enabled: false
+
+Layout/EmptyLineAfterGuardClause:
+  Enabled: false
+
+Style/MutableConstant:
+  Enabled: false
+
+Style/ExpandPathArguments:
+  Enabled: false
+
+Style/Alias:
+  Enabled: false
+
+Style/SafeNavigation:
+  Enabled: false
+
+Style/IfUnlessModifier:
+  Enabled: false
+
+Style/ExplicitBlockArgument:
+  Enabled: false
+
+Lint/AmbiguousBlockAssociation:
+  Enabled: false

@@ -8,6 +8,6 @@ end
 begin
   require "active_support/cache/mem_cache_store"
 
-  ActiveSupport::Cache::MemCacheStore.send(:include, MemCacheStorePatch)
-rescue LoadError # rubocop:disable Lint/HandleExceptions
+  ActiveSupport::Cache::MemCacheStore.include MemCacheStorePatch
+rescue LoadError # rubocop:disable Lint/SuppressedException
 end

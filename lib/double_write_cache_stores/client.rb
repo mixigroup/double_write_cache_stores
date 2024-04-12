@@ -180,7 +180,7 @@ module DoubleWriteCacheStores
           cache_store.incr key, amount, ttl, default
         elsif cache_store.respond_to? :increment
           options[:initial] = amount unless options.key?(:initial)
-          cache_store.increment key, amount, options
+          cache_store.increment key, amount, **options
         end
       end
 
@@ -191,7 +191,7 @@ module DoubleWriteCacheStores
           cache_store.decr key, amount, ttl, default
         elsif cache_store.respond_to? :decrement
           options[:initial] = 0 unless options.key?(:initial)
-          cache_store.decrement key, amount, options
+          cache_store.decrement key, amount, **options
         end
       end
 
